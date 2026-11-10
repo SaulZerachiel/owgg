@@ -4,10 +4,11 @@ RUN apt-get update \
     && apt-get install -y --no-install-recommends \
         libcurl4-openssl-dev \
         libicu-dev \
+        libonig-dev \
         libsqlite3-dev \
         libzip-dev \
         unzip \
-    && docker-php-ext-install \
+    && docker-php-ext-install -j"$(nproc)" \
         bcmath \
         curl \
         intl \
