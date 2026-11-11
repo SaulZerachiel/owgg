@@ -15,11 +15,15 @@ class BattlenetController extends Controller
 
     public function callback()
     {
+        # Battlenet user
         $bnet = Socialite::driver('battlenet')->user();
 
         $user = User::updateOrCreate(
             ['battlenet_id' => $bnet->getId()],
-            ['name' => $bnet->getNickname(), 'battletag' => $bnet->getNickname()]
+            ['name' => $bnet->getNickname(),
+            'email' => $bnet->getEmail() ?? $bnet->getId().'battlenet.local',
+            'email_verified_at' => 'now', 
+            'battletag' => $bnet->getNickname()]
         );
 
         Auth::login($user);

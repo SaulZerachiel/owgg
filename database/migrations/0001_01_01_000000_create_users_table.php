@@ -15,8 +15,10 @@ return new class extends Migration
             $table->id();
             $table->string('name');
             $table->string('email')->unique();
-            $table->timestamp('email_verified_at')->nullable();
-            $table->string('password');
+            $table->string('battlenet_id');
+            $table->string('battletag');
+            $table->timestamp('email_verified_at');
+            $table->string('password')->nullable();
             $table->rememberToken();
             $table->timestamps();
         });
