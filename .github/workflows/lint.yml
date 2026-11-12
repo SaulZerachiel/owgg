@@ -24,7 +24,7 @@ jobs:
         run: composer lint
 
       - name: Larastan (static analysis)
-        run: composer analyse
+        run: composer types:check
 
   js:
     name: JS (ESLint + Prettier)
