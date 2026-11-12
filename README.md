@@ -37,40 +37,46 @@ Before starting, make sure you have installed:
 ## Quick start
 
 1. Clone the repository
-   ```bash
-   git clone https://github.com/SaulZerachiel/owgg.git
-   cd owgg
-   ```
+
+    ```bash
+    git clone https://github.com/SaulZerachiel/owgg.git
+    cd owgg
+    ```
 
 2. Install PHP dependencies
-   ```bash
-   composer install
-   ```
+
+    ```bash
+    composer install
+    ```
 
 3. Install frontend dependencies
-   ```bash
-   npm install
-   ```
+
+    ```bash
+    npm install
+    ```
 
 4. Create your environment file
-   ```bash
-   cp .env.example .env
-   ```
+
+    ```bash
+    cp .env.example .env
+    ```
 
 5. Generate the application key
-   ```bash
-   php artisan key:generate
-   ```
+
+    ```bash
+    php artisan key:generate
+    ```
 
 6. Run database migrations
-   ```bash
-   php artisan migrate
-   ```
+
+    ```bash
+    php artisan migrate
+    ```
 
 7. Start the app
-   ```bash
-   composer run dev
-   ```
+    ```bash
+    composer run dev
+    ```
 
 This starts the Laravel server, queue worker, and Vite dev server together.
 
