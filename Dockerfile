@@ -30,9 +30,10 @@ RUN composer install \
     --prefer-dist \
     --optimize-autoloader
 
-FROM node:22-bookworm-slim AS assets
+FROM php-base AS assets
 
 WORKDIR /app
+COPY --from=node:22-bookworm-slim /usr/local/ /usr/local/
 COPY package.json package-lock.json ./
 RUN npm ci
 COPY --from=vendor /app/vendor ./vendor
@@ -49,6 +50,7 @@ ENV APP_DEBUG=false
 COPY --from=vendor /app/vendor ./vendor
 COPY . .
 COPY --from=assets /app/public/build ./public/build
+RUN php artisan package:discover --ansi
 
 RUN mkdir -p \
         database \
