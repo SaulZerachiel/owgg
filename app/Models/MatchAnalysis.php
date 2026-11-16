@@ -27,7 +27,7 @@ class MatchAnalysis extends Model
 
     public function match(): BelongsTo
     {
-        return $this->belongsTo(GameMatch::class);
+        return $this->belongsTo(GameMatch::class, 'match_id');
     }
 
     public function recommendations(): HasMany

@@ -6,7 +6,7 @@ use App\Models\User;
 test('guests cannot use the coach', function () {
     $response = $this->postJson(route('chat.message'), ['message' => 'Bonjour']);
 
-    $response->assertRedirect(route('login'));
+    $response->assertUnauthorized();
 });
 
 test('authenticated users can use the fake coach and see their remaining quota', function () {

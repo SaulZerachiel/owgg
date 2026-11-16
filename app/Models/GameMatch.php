@@ -12,6 +12,8 @@ class GameMatch extends Model
 {
     use HasFactory;
 
+    protected $table = 'matches';
+
     protected $fillable = [
         'profile_id',
         'external_id',
@@ -33,11 +35,11 @@ class GameMatch extends Model
 
     public function heroStats(): HasMany
     {
-        return $this->hasMany(MatchHeroStat::class);
+        return $this->hasMany(MatchHeroStat::class, 'match_id');
     }
 
     public function analysis(): HasOne
     {
-        return $this->hasOne(MatchAnalysis::class);
+        return $this->hasOne(MatchAnalysis::class, 'match_id');
     }
 }
