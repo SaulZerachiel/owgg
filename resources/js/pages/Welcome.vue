@@ -25,7 +25,7 @@ import { dashboard, login, register } from '@/routes';
                 <h1>PLAY<br /><strong>SMARTER.</strong></h1>
                 <p class="owgg-description">
                     Analysez vos parties, comprenez vos statistiques et
-                    progressez avec votre coach personnalisé.
+                    progressez avec Coach Winston.
                 </p>
 
                 <div class="owgg-actions">

@@ -45,9 +45,9 @@ import { Head } from '@inertiajs/vue3';
                     <span class="flow-number">03</span>
                     <div class="flow-icon">△</div>
                     <p class="flow-kicker">TACTICAL CORE</p>
-                    <h2>AI COACH</h2>
+                    <h2>COACH WINSTON</h2>
                     <p>
-                        Notre coach IA transforme ces données en conseils
+                        Coach Winston transforme ces données en conseils
                         concrets, lisibles et adaptés à votre style de jeu.
                     </p>
                 </article>

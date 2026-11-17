@@ -61,9 +61,9 @@ const user = page.props.auth.user;
                     <span>Analyse bientôt disponible</span>
                 </article>
                 <article class="stat-card stat-card-accent">
-                    <p class="panel-label">AI COACH</p>
+                    <p class="panel-label">COACH WINSTON</p>
                     <strong>READY</strong>
-                    <span>Votre coach est prêt à analyser vos performances</span>
+                    <span>Coach Winston est prêt à analyser vos performances</span>
                 </article>
             </section>
 

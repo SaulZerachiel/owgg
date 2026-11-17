@@ -38,7 +38,7 @@ const { isCurrentUrl } = useCurrentUrl();
 
 const navItems: NavItem[] = [
     { title: 'Dashboard', href: dashboard() },
-    { title: 'Coach IA', href: '/chat' },
+    { title: 'Coach Winston', href: '/chat' },
     { title: 'Pricing', href: '/pricing' },
     { title: 'About Us', href: '/about-us' },
 ];

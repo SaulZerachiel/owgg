@@ -24,7 +24,7 @@ const mainNavItems: NavItem[] = [
         icon: LayoutGrid,
     },
     {
-        title: 'Coach IA',
+        title: 'Coach Winston',
         href: '/chat',
         icon: MessageCircle,
     },
