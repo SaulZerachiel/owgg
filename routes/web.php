@@ -12,7 +12,7 @@ Route::middleware(['auth', 'verified'])->group(function () {
     Route::post('chat/message', [ChatController::class, 'message'])->name('chat.message');
 });
 
-Route::get('/auth/battlenet', [BattlenetController::class, 'redirect'])->name('battlenet.redirect'); // Send user to battle.net login
-Route::get('/auth/battlenet/callback', [BattlenetController::class, 'callback']); // Sends users back to app
+Route::get('/auth/battlenet', [BattlenetController::class, 'redirect'])->name('battlenet.redirect');
+Route::get('/auth/battlenet/callback', [BattlenetController::class, 'callback'])->name('battlenet.callback');
 
 require __DIR__.'/settings.php';
