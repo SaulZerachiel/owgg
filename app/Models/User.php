@@ -53,4 +53,10 @@ class User extends Authenticatable implements MustVerifyEmail, PasskeyUser
     {
         return $this->hasMany(Profile::class);
     }
+
+    /** @return HasMany<ChatConversation, $this> */
+    public function chatConversations(): HasMany
+    {
+        return $this->hasMany(ChatConversation::class);
+    }
 }
