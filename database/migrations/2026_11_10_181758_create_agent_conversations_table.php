@@ -6,6 +6,8 @@ use Laravel\Ai\Migrations\AiMigration;
 
 return new class extends AiMigration
 {
+    public $withinTransaction = false;
+
     /**
      * Run the migrations.
      */
