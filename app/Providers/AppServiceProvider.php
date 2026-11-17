@@ -10,6 +10,7 @@ use Illuminate\Support\Facades\Date;
 use Illuminate\Support\Facades\DB;
 use Illuminate\Support\Facades\Event;
 use Illuminate\Support\ServiceProvider;
+use Illuminate\Support\Facades\URL;
 use Illuminate\Validation\Rules\Password;
 use SocialiteProviders\Battlenet\Provider;
 use SocialiteProviders\Manager\SocialiteWasCalled;
@@ -34,6 +35,11 @@ class AppServiceProvider extends ServiceProvider
     public function boot(): void
     {
         $this->configureDefaults();
+
+        if (app()->isProduction()) {
+            URL::forceScheme('https');
+        }
+
         Event::listen(function (SocialiteWasCalled $event) {
             $event->extendSocialite('battlenet', Provider::class);
         });
