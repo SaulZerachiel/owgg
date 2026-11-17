@@ -2,6 +2,9 @@
 
 namespace App\Providers;
 
+use App\Ai\AiClient;
+use App\Ai\FakeAiClient;
+use App\Ai\OpenRouterClient;
 use Carbon\CarbonImmutable;
 use Illuminate\Support\Facades\Date;
 use Illuminate\Support\Facades\DB;
@@ -18,7 +21,11 @@ class AppServiceProvider extends ServiceProvider
      */
     public function register(): void
     {
-        //
+        // L'environnement de test utilise le faux client ; Render utilise OpenRouter.
+        $this->app->bind(AiClient::class, fn (): AiClient => app()->environment('testing')
+            || config('services.openrouter.fake')
+            ? new FakeAiClient()
+            : new OpenRouterClient());
     }
 
     /**

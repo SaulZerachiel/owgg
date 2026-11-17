@@ -42,4 +42,12 @@ return [
         'region' => env('BATTLENET_REGION', 'eu'),
     ],
 
+    'openrouter' => [
+        'key' => env('OPENROUTER_API_KEY'),
+        'model' => env('OPENROUTER_MODEL', 'openai/gpt-4o-mini'),
+        'timeout' => (int) env('OPENROUTER_TIMEOUT', 30),
+        'daily_quota' => (int) env('AI_DAILY_QUOTA', 10),
+        'fake' => (bool) env('OPENROUTER_FAKE', false),
+    ],
+
 ];

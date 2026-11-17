@@ -5,6 +5,8 @@ namespace App\Models;
 use Database\Factories\ProfileFactory;
 use Illuminate\Database\Eloquent\Factories\HasFactory;
 use Illuminate\Database\Eloquent\Model;
+use Illuminate\Database\Eloquent\Relations\BelongsTo;
+use Illuminate\Database\Eloquent\Relations\HasMany;
 
 class Profile extends Model
 {
@@ -24,4 +26,14 @@ class Profile extends Model
         'is_public',    // Has to be true, else can't access data.
         // If private -> error with explanation on how to turn profile public on overwatch
     ];
+
+    public function user(): BelongsTo
+    {
+        return $this->belongsTo(User::class);
+    }
+
+    public function matches(): HasMany
+    {
+        return $this->hasMany(GameMatch::class);
+    }
 }
