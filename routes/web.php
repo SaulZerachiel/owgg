@@ -10,6 +10,8 @@ Route::middleware(['auth', 'verified'])->group(function () {
     Route::inertia('dashboard', 'Dashboard')->name('dashboard');
     Route::get('chat', [ChatController::class, 'page'])->name('chat');
     Route::post('chat/message', [ChatController::class, 'message'])->name('chat.message');
+    Route::inertia('pricing', 'Pricing')->name('pricing');
+    Route::inertia('about-us', 'About')->name('about');
 });
 
 Route::get('/auth/battlenet', [BattlenetController::class, 'redirect'])->name('battlenet.redirect');

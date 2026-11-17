@@ -30,7 +30,7 @@ const user = page.props.auth.user;
         <section class="dashboard-content">
             <header class="dashboard-header">
                 <div>
-                    <p class="dashboard-eyebrow">OVERWATCH 2 // PERFORMANCE LAB</p>
+                    <p class="dashboard-eyebrow">OVERWATCH // PERFORMANCE LAB</p>
                     <h1>PLAYER <strong>PROFILE</strong></h1>
                 </div>
                 <span class="dashboard-status"><i></i> SYSTEM ONLINE</span>
@@ -87,7 +87,8 @@ const user = page.props.auth.user;
     --orange: #f06432;
     --blue: #a9e8ff;
     position: relative;
-    min-height: calc(100vh - 65px);
+    height: calc(100dvh - 76px);
+    min-height: 0;
     overflow: hidden;
     background:
         radial-gradient(circle at 78% 25%, #18384b 0, #0d1b27 22%, transparent 52%),
@@ -131,9 +132,10 @@ const user = page.props.auth.user;
 .dashboard-content {
     position: relative;
     z-index: 1;
-    width: min(1120px, calc(100% - 48px));
+    width: min(1440px, calc(100% - 12vw));
+    height: 100%;
     margin-inline: auto;
-    padding: 48px 0;
+    padding: clamp(24px, 4vh, 42px) 0;
 }
 
 .dashboard-header,
@@ -148,7 +150,7 @@ const user = page.props.auth.user;
     align-items: flex-end;
     justify-content: space-between;
     gap: 24px;
-    margin-bottom: 32px;
+    margin-bottom: clamp(20px, 3vh, 30px);
 }
 
 .dashboard-eyebrow,
@@ -214,7 +216,7 @@ h1 strong {
     display: flex;
     align-items: center;
     gap: 22px;
-    padding: 26px 30px;
+    padding: clamp(18px, 2.5vh, 26px) 30px;
     border-left: 3px solid var(--orange);
 }
 
@@ -271,7 +273,7 @@ h1 strong {
 }
 
 .stat-card {
-    min-height: 150px;
+    min-height: 130px;
     padding: 22px;
 }
 
@@ -296,7 +298,7 @@ h1 strong {
     display: flex;
     align-items: center;
     gap: 22px;
-    padding: 26px 30px;
+    padding: clamp(18px, 2.5vh, 26px) 30px;
 }
 
 .coming-soon-icon {
@@ -316,8 +318,15 @@ h1 strong {
 }
 
 @media (max-width: 700px) {
+    .owgg-dashboard {
+        height: auto;
+        min-height: calc(100dvh - 64px);
+        overflow: auto;
+    }
+
     .dashboard-content {
         width: min(100% - 28px, 1120px);
+        height: auto;
         padding: 28px 0;
     }
 

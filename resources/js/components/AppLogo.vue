@@ -20,11 +20,7 @@
     border: 1px solid #f06432;
     color: #f06432;
     font-size: 1.15rem;
-    transform: rotate(45deg);
-}
-
-.owgg-logo-mark span {
-    transform: rotate(-45deg);
+    clip-path: polygon(50% 0, 100% 50%, 50% 100%, 0 50%);
 }
 
 .owgg-logo-copy {
