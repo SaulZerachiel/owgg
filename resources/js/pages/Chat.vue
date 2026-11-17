@@ -92,7 +92,7 @@ async function sendMessage() {
             class="flex min-h-[50vh] flex-1 flex-col gap-4 overflow-y-auto rounded-xl border p-4"
         >
             <p v-if="messages.length === 0" class="text-muted-foreground">
-                Posez une question à votre coach Overwatch 2.
+                Posez une question à votre coach Overwatch.
             </p>
             <div
                 v-for="(item, index) in messages"

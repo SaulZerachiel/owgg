@@ -30,7 +30,7 @@ const user = page.props.auth.user;
         <section class="dashboard-content">
             <header class="dashboard-header">
                 <div>
-                    <p class="dashboard-eyebrow">OVERWATCH 2 // PERFORMANCE LAB</p>
+                    <p class="dashboard-eyebrow">OVERWATCH // PERFORMANCE LAB</p>
                     <h1>PLAYER <strong>PROFILE</strong></h1>
                 </div>
                 <span class="dashboard-status"><i></i> SYSTEM ONLINE</span>

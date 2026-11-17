@@ -92,7 +92,7 @@ const navItems: NavItem[] = [
             <DropdownMenu>
                 <DropdownMenuTrigger as-child>
                     <Button class="owgg-profile-trigger" variant="ghost">
-                        <Avatar class="size-8 overflow-hidden rounded-full">
+                        <Avatar class="owgg-profile-avatar size-8 overflow-hidden rounded-full">
                             <AvatarImage
                                 v-if="auth.user.avatar"
                                 :src="auth.user.avatar"
@@ -208,7 +208,9 @@ const navItems: NavItem[] = [
 .owgg-profile-trigger {
     min-width: 0;
     margin-left: auto;
-    border: 1px solid #a9e8ff33;
+    padding: 5px 0 5px 14px;
+    border: 0;
+    border-left: 1px solid #a9e8ff44;
     border-radius: 0;
     color: #eef6f8;
 }
@@ -225,6 +227,11 @@ const navItems: NavItem[] = [
     letter-spacing: 0.08em;
     text-overflow: ellipsis;
     text-transform: uppercase;
+}
+
+.owgg-profile-avatar {
+    border: 1px solid #f06432;
+    box-shadow: 0 0 0 3px #f064321c, 0 0 14px #f0643238;
 }
 
 .owgg-avatar-fallback {
