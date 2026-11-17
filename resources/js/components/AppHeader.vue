@@ -148,11 +148,12 @@ const navItems: NavItem[] = [
 
 .owgg-header-inner {
     display: flex;
-    width: min(1280px, calc(100% - 40px));
+    width: 100%;
     min-height: 76px;
     align-items: center;
     gap: 36px;
     margin-inline: auto;
+    padding-inline: 24px;
 }
 
 .owgg-header-logo {
@@ -274,9 +275,10 @@ const navItems: NavItem[] = [
 
 @media (max-width: 640px) {
     .owgg-header-inner {
-        width: min(100% - 24px, 1280px);
+        width: 100%;
         min-height: 64px;
         gap: 14px;
+        padding-inline: 12px;
     }
 
     .owgg-header-logo :deep(.owgg-logo-copy) {

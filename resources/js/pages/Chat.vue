@@ -256,7 +256,7 @@ async function sendMessage() {
 <style scoped>
 .chat-shell {
     display: grid;
-    height: 100%;
+    height: calc(100dvh - 76px);
     min-height: 0;
     grid-template-columns: minmax(210px, 260px) minmax(0, 1fr);
     overflow: hidden;
