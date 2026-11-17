@@ -34,7 +34,7 @@ final class CoachService
             [
                 // Ce message définit le rôle et la langue attendue pour toutes les conversations.
                 'role' => 'system',
-                'content' => 'Tu es un coach Overwatch utile, concis et bienveillant. Réponds en français.',
+                'content' => (string) config('winston.system_prompt'),
             ],
             // On limite l'historique pour maîtriser la taille et le coût de la requête.
             ...array_slice($history, -10),

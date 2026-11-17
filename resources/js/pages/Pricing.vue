@@ -26,7 +26,7 @@ import { Head } from '@inertiajs/vue3';
                     <ul>
                         <li>Profil Battle.net</li>
                         <li>Statistiques Overfast</li>
-                        <li>10 analyses IA / jour</li>
+                        <li>10 analyses de Coach Winston / jour</li>
                     </ul>
                     <button class="pricing-button secondary">CURRENT PLAN</button>
                 </article>
@@ -37,7 +37,7 @@ import { Head } from '@inertiajs/vue3';
                     <h2>9<span>€</span><small>/ MONTH</small></h2>
                     <p class="card-description">Pour transformer chaque partie en expérience.</p>
                     <ul>
-                        <li>Analyses IA avancées</li>
+                        <li>Analyses avancées de Coach Winston</li>
                         <li>Historique de matchs étendu</li>
                         <li>Recommandations personnalisées</li>
                     </ul>
@@ -51,7 +51,7 @@ import { Head } from '@inertiajs/vue3';
                     <ul>
                         <li>Analyses sans limite</li>
                         <li>Rapports de progression</li>
-                        <li>Priorité au coach IA</li>
+                        <li>Priorité à Coach Winston</li>
                     </ul>
                     <button class="pricing-button secondary">COMING SOON</button>
                 </article>

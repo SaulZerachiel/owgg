@@ -69,7 +69,7 @@ async function sendMessage() {
         error.value =
             exception instanceof Error
                 ? exception.message
-                : 'Le service IA est indisponible.';
+                : 'Le service de Coach Winston est indisponible.';
     } finally {
         loading.value = false;
     }
@@ -77,11 +77,11 @@ async function sendMessage() {
 </script>
 
 <template>
-    <Head title="Coach IA" />
+    <Head title="Coach Winston" />
 
     <div class="flex h-full flex-1 flex-col gap-4 p-4">
         <div>
-            <h1 class="text-xl font-semibold">Coach IA</h1>
+            <h1 class="text-xl font-semibold">Coach Winston</h1>
             <p class="text-sm text-muted-foreground">
                 Il vous reste {{ remaining }} essai{{ remaining > 1 ? 's' : '' }}
                 aujourd'hui.
@@ -92,7 +92,7 @@ async function sendMessage() {
             class="flex min-h-[50vh] flex-1 flex-col gap-4 overflow-y-auto rounded-xl border p-4"
         >
             <p v-if="messages.length === 0" class="text-muted-foreground">
-                Posez une question à votre coach Overwatch.
+                Posez une question à Coach Winston.
             </p>
             <div
                 v-for="(item, index) in messages"
@@ -107,7 +107,7 @@ async function sendMessage() {
                 {{ item.content }}
             </div>
             <p v-if="loading" class="text-sm text-muted-foreground">
-                Le coach réfléchit...
+                Coach Winston réfléchit...
             </p>
         </div>
 
