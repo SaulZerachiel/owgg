@@ -1,19 +1,50 @@
-<script setup lang="ts">
-import { usePage } from '@inertiajs/vue3';
-import AppLogoIcon from '@/components/AppLogoIcon.vue';
-
-const name = usePage().props.name;
-</script>
-
 <template>
     <div
-        class="flex aspect-square size-8 items-center justify-center rounded-md bg-sidebar-primary text-sidebar-primary-foreground"
+        class="owgg-logo-mark"
     >
-        <AppLogoIcon class="size-5 fill-current text-white dark:text-black" />
+        <span>✦</span>
     </div>
-    <div class="ml-1 grid flex-1 text-left text-sm">
-        <span class="mb-0.5 truncate leading-tight font-semibold">{{
-            name
-        }}</span>
+    <div class="owgg-logo-copy">
+        <span>OWGG</span>
+        <small>PERFORMANCE LAB</small>
     </div>
 </template>
+
+<style scoped>
+.owgg-logo-mark {
+    display: grid;
+    width: 32px;
+    height: 32px;
+    flex: 0 0 auto;
+    place-items: center;
+    border: 1px solid #f06432;
+    color: #f06432;
+    font-size: 1.15rem;
+    transform: rotate(45deg);
+}
+
+.owgg-logo-mark span {
+    transform: rotate(-45deg);
+}
+
+.owgg-logo-copy {
+    display: grid;
+    margin-left: 4px;
+    text-align: left;
+    line-height: 1;
+}
+
+.owgg-logo-copy span {
+    color: #eef6f8;
+    font-size: 0.9rem;
+    font-weight: 900;
+    letter-spacing: 0.14em;
+}
+
+.owgg-logo-copy small {
+    margin-top: 5px;
+    color: #88a6b2;
+    font-size: 0.46rem;
+    letter-spacing: 0.12em;
+}
+</style>
