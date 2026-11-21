@@ -7,6 +7,10 @@ use Illuminate\Database\Eloquent\Relations\BelongsTo;
 
 class RolesStats extends Model
 {
+    protected $primaryKey = 'roles_stats_id';
+    public $incrementing = false;
+    protected $keyType = 'string';
+
     protected $fillable = [
         'roles_stats_id', // PK
         'role_id', // FK

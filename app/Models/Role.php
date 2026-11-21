@@ -8,6 +8,10 @@ use Illuminate\Database\Eloquent\Relations\HasOneOrMany;
 
 class Role extends Model
 {
+    protected $primaryKey = 'role_id';
+    public $incrementing = false;
+    protected $keyType = 'string';
+
     protected $fillable = [
         'role_id', //PK
         'role_name',

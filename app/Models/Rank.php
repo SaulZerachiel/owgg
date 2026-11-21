@@ -7,6 +7,10 @@ use Illuminate\Database\Eloquent\Relations\BelongsTo;
 
 class Rank extends Model
 {
+    protected $primaryKey = 'rank_id';
+    public $incrementing = false;
+    protected $keyType = 'string';
+
     protected $fillable = [
         'rank_id', // PK
         'player_id', // FK

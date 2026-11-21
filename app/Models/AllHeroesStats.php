@@ -7,6 +7,10 @@ use Illuminate\Database\Eloquent\Relations\BelongsTo;
 
 class AllHeroesStats extends Model
 {
+    protected $primaryKey = 'player_id';
+    public $incrementing = false;
+    protected $keyType = 'string';
+
     protected $fillable = [
         'player_id',
         'average_assists',
