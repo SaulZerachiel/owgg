@@ -2,18 +2,19 @@
 
 namespace App\Models;
 
-use Illuminate\Database\Eloquent\Factories\HasFactory;
 use Illuminate\Database\Eloquent\Model;
-use Illuminate\Database\Eloquent\Relations\HasMany;
+use Illuminate\Database\Eloquent\Relations\BelongsTo;
 
 class Hero extends Model
 {
-    use HasFactory;
+    protected $fillable = [
+        'hero_id', // PK
+        'role_id', // FK
+        'hero_name', 
+    ];
 
-    protected $fillable = ['slug', 'name', 'role'];
-
-    public function matchStats(): HasMany
+    public function role(): BelongsTo
     {
-        return $this->hasMany(MatchHeroStat::class);
+        return $this->belongsTo(Role::class, 'role_id', 'role_id');
     }
 }

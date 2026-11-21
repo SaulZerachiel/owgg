@@ -1,0 +1,41 @@
+<?php
+
+namespace App\Models;
+
+use Illuminate\Database\Eloquent\Model;
+use Illuminate\Database\Eloquent\Relations\BelongsTo;
+
+class RolesStats extends Model
+{
+    protected $fillable = [
+        'roles_stats_id', // PK
+        'role_id', // FK
+        'player_id', // FK
+        'average_assists',
+        'average_damage',
+        'average_deaths',
+        'average_eliminations',
+        'average_healing',
+        'games_lost',
+        'games_played',
+        'games_won',
+        'kda',
+        'time_played',
+        'winrate',
+        'total_assists',
+        'total_damage',
+        'total_deaths',
+        'total_eliminations',
+        'total_healing',
+    ];
+
+    public function profile(): BelongsTo
+    {
+        return $this->belongsTo(Profile::class, 'player_id', 'player_id');
+    }
+
+    public function role(): BelongsTo
+    {
+        return $this->belongsTo(Role::class, 'role_id', 'role_id');
+    }
+}
