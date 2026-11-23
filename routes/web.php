@@ -2,12 +2,14 @@
 
 use App\Http\Controllers\BattlenetController;
 use App\Http\Controllers\ChatController;
+use App\Http\Controllers\StatisticsController;
 use Illuminate\Support\Facades\Route;
 
 Route::inertia('/', 'Welcome')->name('home');
 
 Route::middleware(['auth', 'verified'])->group(function () {
     Route::inertia('dashboard', 'Dashboard')->name('dashboard');
+    Route::get('{playerId}/stats', [StatisticsController::class, 'show'])->name('statistics.show');
     Route::get('chat', [ChatController::class, 'page'])->name('chat');
     Route::post('chat/message', [ChatController::class, 'message'])->name('chat.message');
 });

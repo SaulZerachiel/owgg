@@ -32,31 +32,44 @@ class Profile extends Model
         // If private -> error with explanation on how to turn profile public on overwatch
     ];
 
+    protected function casts(): array
+    {
+        return [
+            'last_updated_at' => 'datetime',
+            'is_public' => 'boolean',
+        ];
+    }
+
     public function user(): BelongsTo
     {
         return $this->belongsTo(User::class);
     }
 
+    /** @return HasMany<Rank, $this> */
     public function ranks(): HasMany
     {
         return $this->hasMany(Rank::class, 'player_id', 'player_id');
     }
 
+    /** @return HasMany<RolesStats, $this> */
     public function rolesStats(): HasMany
     {
         return $this->hasMany(RolesStats::class, 'player_id', 'player_id');
     }
 
+    /** @return HasOne<AllHeroesStats, $this> */
     public function allHeroesStats(): HasOne
     {
         return $this->hasOne(AllHeroesStats::class, 'player_id', 'player_id');
     }
 
-        public function heroStats(): HasMany
+    /** @return HasMany<HeroStats, $this> */
+    public function heroStats(): HasMany
     {
         return $this->hasMany(HeroStats::class, 'player_id', 'player_id');
     }
 
+    /** @return HasMany<HeroSpecificStat, $this> */
     public function heroSpecificStats(): HasMany
     {
         return $this->hasMany(HeroSpecificStat::class, 'player_id', 'player_id');

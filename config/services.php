@@ -42,6 +42,10 @@ return [
         'region' => env('BATTLENET_REGION', 'eu'),
     ],
 
+    'overfast' => [
+        'base_url' => env('OVERFAST_BASE_URL', 'https://overfast-api.tekrop.fr'),
+    ],
+
     'openrouter' => [
         'key' => env('OPENROUTER_API_KEY'),
         'model' => env('OPENROUTER_MODEL', 'openai/gpt-4o-mini'),

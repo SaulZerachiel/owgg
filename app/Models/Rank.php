@@ -25,11 +25,13 @@ class Rank extends Model
         'division',
     ];
 
+    /** @return BelongsTo<Profile, $this> */
     public function profile(): BelongsTo
     {
         return $this->belongsTo(Profile::class, 'player_id', 'player_id');
     }
 
+    /** @return BelongsTo<Role, $this> */
     public function role(): BelongsTo
     {
         return $this->belongsTo(Role::class, 'role_id', 'role_id');

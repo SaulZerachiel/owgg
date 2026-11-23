@@ -7,6 +7,9 @@ use Illuminate\Database\Eloquent\Factories\HasFactory;
 use Illuminate\Database\Eloquent\Model;
 use Illuminate\Database\Eloquent\Relations\BelongsTo;
 
+/**
+ * @property string $hero_name
+ */
 class Hero extends Model
 {
     /** @use HasFactory<HeroFactory> */
@@ -22,6 +25,7 @@ class Hero extends Model
         'hero_name', 
     ];
 
+    /** @return BelongsTo<Role, $this> */
     public function role(): BelongsTo
     {
         return $this->belongsTo(Role::class, 'role_id', 'role_id');

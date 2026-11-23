@@ -2,10 +2,16 @@
 
 namespace App\Http\Controllers;
 
+use App\Jobs\ImportPlayerStats;
 use App\Models\User;
+use App\Services\OverfastProfileNotFoundException;
+use Illuminate\Http\Client\ConnectionException;
+use Illuminate\Http\Client\RequestException;
 use Illuminate\Support\Facades\Auth;
+use Inertia\Inertia;
 use Laravel\Socialite\Facades\Socialite;
 use Symfony\Component\HttpFoundation\RedirectResponse;
+use UnexpectedValueException;
 
 class BattlenetController extends Controller
 {
@@ -33,6 +39,24 @@ class BattlenetController extends Controller
         );
 
         Auth::login($user);
+
+        if ($user->stats_synced_at === null || $user->stats_synced_at->lt(now()->subHour())) {
+            try {
+                ImportPlayerStats::dispatch($user);
+            } catch (OverfastProfileNotFoundException) {
+                Inertia::flash('toast', [
+                    'type' => 'error',
+                    'message' => 'Your Overwatch profile is private or unavailable on OverFast.',
+                ]);
+            } catch (ConnectionException|RequestException|UnexpectedValueException $exception) {
+                report($exception);
+
+                Inertia::flash('toast', [
+                    'type' => 'error',
+                    'message' => 'Your Overwatch stats could not be imported right now. Please try again later.',
+                ]);
+            }
+        }
 
         return redirect()->intended(route('dashboard'));
     }

@@ -1,6 +1,185 @@
 <?php
- 
-// Call API with player ID
-class OverfastService{
-    
+
+namespace App\Services;
+
+use Illuminate\Http\Client\ConnectionException;
+use Illuminate\Support\Facades\Http;
+use UnexpectedValueException;
+
+class OverfastService
+{
+    /**
+     * @return array<string, mixed>
+     *
+     * @throws ConnectionException
+     * @throws OverfastProfileNotFoundException
+     */
+    public function playerByBattleTag(string $battleTag): array
+    {
+        $searchResult = $this->getObject('/players', ['name' => $battleTag]);
+
+        if (! is_array($searchResult['results'] ?? null)) {
+            throw new UnexpectedValueException('OverFast returned an invalid player search result.');
+        }
+
+        foreach ($searchResult['results'] as $player) {
+            if (! is_array($player) || ($player['player_id'] ?? null) !== $battleTag) {
+                continue;
+            }
+
+            if (($player['is_public'] ?? null) !== true) {
+                throw new OverfastProfileNotFoundException(
+                    "The OverFast profile for [{$battleTag}] is not public.",
+                );
+            }
+
+            return $this->stringKeyedArray($player);
+        }
+
+        throw new OverfastProfileNotFoundException(
+            "No public OverFast profile was found for [{$battleTag}].",
+        );
+    }
+
+    /**
+     * @return array<string, mixed>
+     *
+     * @throws ConnectionException
+     * @throws OverfastProfileNotFoundException
+     */
+    public function playerSummary(string $playerId): array
+    {
+        return $this->getObject('/players/'.rawurlencode($playerId).'/summary');
+    }
+
+    /**
+     * @return array<string, mixed>
+     *
+     * @throws ConnectionException
+     * @throws OverfastProfileNotFoundException
+     */
+    public function playerStatsSummary(string $playerId): array
+    {
+        return $this->getObject('/players/'.rawurlencode($playerId).'/stats/summary', [
+            'gamemode' => 'competitive',
+            'platform' => 'pc',
+        ]);
+    }
+
+    /**
+     * @return array<string, mixed>
+     *
+     * @throws ConnectionException
+     * @throws OverfastProfileNotFoundException
+     */
+    public function playerCareerStats(string $playerId): array
+    {
+        return $this->getObject('/players/'.rawurlencode($playerId).'/stats/career', [
+            'gamemode' => 'competitive',
+            'platform' => 'pc',
+        ]);
+    }
+
+    /**
+     * @return list<array<string, mixed>>
+     *
+     * @throws ConnectionException
+     * @throws OverfastProfileNotFoundException
+     */
+    public function roles(): array
+    {
+        return $this->getList('/roles');
+    }
+
+    /**
+     * @return list<array<string, mixed>>
+     *
+     * @throws ConnectionException
+     * @throws OverfastProfileNotFoundException
+     */
+    public function heroes(): array
+    {
+        return $this->getList('/heroes');
+    }
+
+    /**
+     * @param  array<string, string>  $query
+     * @return array<array-key, mixed>
+     *
+     * @throws ConnectionException
+     * @throws OverfastProfileNotFoundException
+     */
+    private function get(string $path, array $query = []): array
+    {
+        $response = Http::baseUrl(rtrim(config('services.overfast.base_url'), '/'))
+            ->timeout(10)
+            ->retry(3, 250, throw: false)
+            ->get($path, $query);
+
+        if ($response->notFound() && str_starts_with($path, '/players')) {
+            throw new OverfastProfileNotFoundException(
+                'OverFast has no public statistics for this player.',
+            );
+        }
+
+        $data = $response->throw()->json();
+
+        if (! is_array($data)) {
+            throw new UnexpectedValueException('OverFast returned an invalid response.');
+        }
+
+        return $data;
+    }
+
+    /**
+     * @param  array<string, string>  $query
+     * @return array<string, mixed>
+     */
+    private function getObject(string $path, array $query = []): array
+    {
+        return $this->stringKeyedArray($this->get($path, $query));
+    }
+
+    /**
+     * @return list<array<string, mixed>>
+     */
+    private function getList(string $path): array
+    {
+        $data = $this->get($path);
+
+        if (! array_is_list($data)) {
+            throw new UnexpectedValueException('OverFast returned an invalid list response.');
+        }
+
+        $items = [];
+
+        foreach ($data as $item) {
+            if (! is_array($item)) {
+                throw new UnexpectedValueException('OverFast returned an invalid list item.');
+            }
+
+            $items[] = $this->stringKeyedArray($item);
+        }
+
+        return $items;
+    }
+
+    /**
+     * @param  array<array-key, mixed>  $data
+     * @return array<string, mixed>
+     */
+    private function stringKeyedArray(array $data): array
+    {
+        $result = [];
+
+        foreach ($data as $key => $value) {
+            if (! is_string($key)) {
+                throw new UnexpectedValueException('OverFast returned an invalid object response.');
+            }
+
+            $result[$key] = $value;
+        }
+
+        return $result;
+    }
 }

@@ -86,11 +86,13 @@ class HeroStats extends Model
         'self_healing_most_in_game',
     ];
 
+    /** @return BelongsTo<Hero, $this> */
     public function hero(): BelongsTo
     {
         return $this->belongsTo(Hero::class, 'hero_id', 'hero_id');
     }
 
+    /** @return BelongsTo<Profile, $this> */
     public function profile(): BelongsTo
     {
         return $this->belongsTo(Profile::class, 'player_id', 'player_id');

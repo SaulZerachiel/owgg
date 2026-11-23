@@ -8,6 +8,9 @@ use Illuminate\Database\Eloquent\Model;
 use Illuminate\Database\Eloquent\Relations\HasMany;
 use Illuminate\Database\Eloquent\Relations\HasOneOrMany;
 
+/**
+ * @property string $role_name
+ */
 class Role extends Model
 {
     /** @use HasFactory<RoleFactory> */
@@ -23,6 +26,7 @@ class Role extends Model
         'role_icon',
     ];
 
+    /** @return HasMany<Rank, $this> */
     public function ranks(): HasMany
     {
         return $this->hasMany(Rank::class, 
@@ -31,6 +35,7 @@ class Role extends Model
         );
     }
 
+    /** @return HasMany<Hero, $this> */
     public function heroes(): HasMany
     {
         return $this->hasMany(Hero::class,
