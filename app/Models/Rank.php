@@ -2,11 +2,16 @@
 
 namespace App\Models;
 
+use Database\Factories\RankFactory;
+use Illuminate\Database\Eloquent\Factories\HasFactory;
 use Illuminate\Database\Eloquent\Model;
 use Illuminate\Database\Eloquent\Relations\BelongsTo;
 
 class Rank extends Model
 {
+    /** @use HasFactory<RankFactory> */
+    use HasFactory;
+
     protected $primaryKey = 'rank_id';
     public $incrementing = false;
     protected $keyType = 'string';

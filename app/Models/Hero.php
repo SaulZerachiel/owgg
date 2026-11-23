@@ -2,11 +2,16 @@
 
 namespace App\Models;
 
+use Database\Factories\HeroFactory;
+use Illuminate\Database\Eloquent\Factories\HasFactory;
 use Illuminate\Database\Eloquent\Model;
 use Illuminate\Database\Eloquent\Relations\BelongsTo;
 
 class Hero extends Model
 {
+    /** @use HasFactory<HeroFactory> */
+    use HasFactory;
+
     protected $primaryKey = 'hero_id';
     public $incrementing = false;
     protected $keyType = 'string';

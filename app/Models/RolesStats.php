@@ -2,11 +2,16 @@
 
 namespace App\Models;
 
+use Database\Factories\RolesStatsFactory;
+use Illuminate\Database\Eloquent\Factories\HasFactory;
 use Illuminate\Database\Eloquent\Model;
 use Illuminate\Database\Eloquent\Relations\BelongsTo;
 
 class RolesStats extends Model
 {
+    /** @use HasFactory<RolesStatsFactory> */
+    use HasFactory;
+
     protected $primaryKey = 'roles_stats_id';
     public $incrementing = false;
     protected $keyType = 'string';

@@ -15,17 +15,10 @@ class DatabaseSeeder extends Seeder
      */
     public function run(): void
     {
-        // User::factory(10)->create();
-
-        $user = User::factory()->create([
-            'name' => 'Test User',
-            'email' => 'test@example.com',
-        ]);
-
-        $user->profiles()->create([
-            'player_id' => 'demo-player',
-            'name' => 'Demo Player',
-            'is_public' => true,
+        $this->call([
+            RoleSeeder::class,
+            HeroSeeder::class,
+            ProfileSeeder::class,
         ]);
     }
 }

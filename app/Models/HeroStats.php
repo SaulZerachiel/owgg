@@ -2,11 +2,16 @@
 
 namespace App\Models;
 
+use Database\Factories\HeroStatsFactory;
+use Illuminate\Database\Eloquent\Factories\HasFactory;
 use Illuminate\Database\Eloquent\Model;
 use Illuminate\Database\Eloquent\Relations\BelongsTo;
 
 class HeroStats extends Model
 {
+    /** @use HasFactory<HeroStatsFactory> */
+    use HasFactory;
+
     protected $fillable = [
         'player_id',
         'hero_id',
