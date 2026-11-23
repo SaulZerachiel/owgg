@@ -80,6 +80,8 @@ Before starting, make sure you have installed:
 
 This starts the Laravel server, queue worker, and Vite dev server together.
 
+When using Laravel Herd (for example, `https://owgg.test`), Herd already serves Laravel. Run `npm run dev` for Vite instead of `composer run dev`; the Composer command also starts Vite, so running both commands would try to claim the same port. Start `php artisan queue:listen --tries=1` separately only if you need the queue worker.
+
 ## Configuration
 
 The project uses SQLite by default in `.env.example`, which is suitable for local development. If you want to use another database, update the `DB_*` values in `.env`.

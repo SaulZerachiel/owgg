@@ -19,7 +19,7 @@ class Profile extends Model
     protected $keyType = 'string';
 
     protected $fillable = [
-        'player_id', // PK
+        'player_id', // PK, Format: TeKrop-2217, Identifier of the player : BattleTag (with "#" replaced by "-").
         'user_id', // FK to user model (one-to-one relation)
         'name',
         'avatar',
