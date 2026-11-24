@@ -11,8 +11,9 @@ return new class extends Migration
     public function up(): void
     {
         Schema::table('profiles', function (Blueprint $table) {
-            $table->foreignId('user_id')->constrained()->cascadeOnDelete();
-            $table->string('name');
+            $table->foreignId('user_id')->after('id')->constrained()->cascadeOnDelete();
+            $table->string('player_id')->unique()->after('user_id');
+            $table->string('name')->after('player_id');
             $table->string('avatar')->nullable();
             $table->string('namecard')->nullable();
             $table->string('title')->nullable();
@@ -29,6 +30,7 @@ return new class extends Migration
             $table->dropForeign(['user_id']);
             $table->dropColumn([
                 'user_id',
+                'player_id',
                 'name',
                 'avatar',
                 'namecard',

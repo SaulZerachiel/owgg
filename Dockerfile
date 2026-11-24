@@ -45,13 +45,22 @@ RUN npm run build
 
 FROM php-base AS runtime
 
+RUN apt-get update \
+    && apt-get install -y --no-install-recommends supervisor \
+    && rm -rf /var/lib/apt/lists/*
+
 WORKDIR /app
 ENV APP_ENV=production
 ENV APP_DEBUG=false
+ENV PORT=10000
+ENV DB_CONNECTION=pgsql
+ENV QUEUE_CONNECTION=database
+ENV DB_QUEUE_RETRY_AFTER=330
 
 COPY --from=vendor /app/vendor ./vendor
 COPY . .
 COPY --from=assets /app/public/build ./public/build
+COPY docker/supervisord.conf /etc/supervisor/conf.d/owgg.conf
 RUN php artisan package:discover --ansi
 
 RUN mkdir -p \
@@ -65,4 +74,4 @@ RUN mkdir -p \
 
 EXPOSE 10000
 
-CMD ["sh", "-c", "php artisan package:discover --ansi && php artisan migrate --force && exec php artisan serve --host=0.0.0.0 --port=${PORT:-10000}"]
+CMD ["sh", "-c", "php artisan package:discover --ansi && if [ \"${DB_CONNECTION:-}\" = \"pgsql\" ]; then : \"${DATABASE_URL_UNPOOLED:?DATABASE_URL_UNPOOLED is required for PostgreSQL migrations}\"; DATABASE_URL=\"$DATABASE_URL_UNPOOLED\" php artisan migrate --force; else php artisan migrate --force; fi && exec supervisord -n -c /etc/supervisor/conf.d/owgg.conf"]

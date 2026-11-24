@@ -99,6 +99,14 @@ BATTLENET_REGION=eu
 
 You will need to register an app with Blizzard and configure the redirect URI to match your local environment.
 
+### Render and OverFast
+
+The Render Docker image runs database migrations before starting the web server. For Neon, configure `DATABASE_URL` with the pooled connection for normal application traffic and `DATABASE_URL_UNPOOLED` with the direct connection for migrations. Keep the unpooled URL secret and do not include `-pooler` in its hostname.
+
+The container uses Supervisor to run both Laravel's web server and the database queue worker. Set `QUEUE_CONNECTION=database` and `DB_QUEUE_RETRY_AFTER=330` in Render. No separate worker service is needed for this single-instance setup.
+
+OverFast does not require an API key. `OVERFAST_BASE_URL` is optional and defaults to `https://overfast-api.tekrop.fr`.
+
 ## Available scripts
 
 ### Composer
