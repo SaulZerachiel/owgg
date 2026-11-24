@@ -22,7 +22,7 @@ uses(RefreshDatabase::class);
 test('BattleTag lookup imports and updates all statistics without duplicating them', function () {
     $user = User::factory()->create(['battletag' => 'Player-1234']);
     $profileRequests = 0;
-    $overfastPlayerId = 'opaque-profile-id';
+    $overfastPlayerId = 'Player-1234';
 
     Http::fake(function (Request $request) use (&$profileRequests, $overfastPlayerId) {
         $path = parse_url($request->url(), PHP_URL_PATH);
@@ -31,15 +31,14 @@ test('BattleTag lookup imports and updates all statistics without duplicating th
             $profileRequests++;
 
             return Http::response([
-                'player_id' => $overfastPlayerId,
-                'name' => $profileRequests === 1 ? 'Player' : 'Updated Player',
-                'avatar' => 'https://example.test/avatar.png',
-                'namecard' => 'https://example.test/namecard.png',
-                'title' => 'Data Broker',
-                'career_url' => "https://overfast-api.tekrop.fr/players/{$overfastPlayerId}",
-                'blizzard_id' => 'c65b8798bc61d6ffbba120%7Ccfe9dd77a4382165e2b920bdcc035949',
-                'last_updated_at' => 1777998881,
-                'is_public' => true,
+                'summary' => [
+                    'username' => $profileRequests === 1 ? 'Player' : 'Updated Player',
+                    'avatar' => 'https://example.test/avatar.png',
+                    'namecard' => 'https://example.test/namecard.png',
+                    'title' => 'Data Broker',
+                    'last_updated_at' => 1777998881,
+                ],
+                'stats' => [],
             ]);
         }
 
@@ -191,7 +190,7 @@ test('BattleTag lookup imports and updates all statistics without duplicating th
         ->and($profile->name)->toBe('Updated Player')
         ->and($profile->avatar)->toBe('https://example.test/avatar.png')
         ->and($profile->career_url)->toBe("https://overfast-api.tekrop.fr/players/{$overfastPlayerId}")
-        ->and($profile->blizzard_id)->toBe('c65b8798bc61d6ffbba120%7Ccfe9dd77a4382165e2b920bdcc035949')
+        ->and($profile->blizzard_id)->toBeNull()
         ->and($profile->is_public)->toBeTrue()
         ->and($rank->tier)->toBe('diamond')
         ->and($rank->division)->toBe(2)
@@ -235,13 +234,31 @@ test('a missing player raises a clear exception', function () {
         ->toThrow(OverfastProfileNotFoundException::class, 'OverFast has no public statistics for this player');
 });
 
-test('BattleTag lookup returns the opaque OverFast player ID', function () {
+test('a profile without stats is rejected as unavailable', function () {
     Http::fake(function (Request $request) {
         if (parse_url($request->url(), PHP_URL_PATH) === '/players/Player-1234') {
             return Http::response([
-                'player_id' => 'opaque-profile-id',
-                'name' => 'Player',
-                'is_public' => true,
+                'summary' => ['username' => 'Player'],
+                'stats' => null,
+            ]);
+        }
+
+        return Http::response([], 404);
+    });
+
+    expect(fn () => app(OverfastService::class)->playerByBattleTag('Player-1234'))
+        ->toThrow(OverfastProfileNotFoundException::class, 'private or has no statistics');
+});
+
+test('BattleTag lookup normalizes the full OverFast profile response', function () {
+    Http::fake(function (Request $request) {
+        if (parse_url($request->url(), PHP_URL_PATH) === '/players/Player-1234') {
+            return Http::response([
+                'summary' => [
+                    'username' => 'Player',
+                    'title' => null,
+                ],
+                'stats' => [],
             ]);
         }
 
@@ -250,5 +267,7 @@ test('BattleTag lookup returns the opaque OverFast player ID', function () {
 
     $player = app(OverfastService::class)->playerByBattleTag('Player-1234');
 
-    expect($player['player_id'])->toBe('opaque-profile-id');
+    expect($player['player_id'])->toBe('Player-1234')
+        ->and($player['name'])->toBe('Player')
+        ->and($player['is_public'])->toBeTrue();
 });

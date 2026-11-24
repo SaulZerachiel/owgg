@@ -21,7 +21,7 @@ class Profile extends Model
     protected $keyType = 'string';
 
     protected $fillable = [
-        'player_id', // Primary key returned by OverFast; may be an opaque identifier.
+        'player_id', // Primary key; OverFast accepts the BattleTag as its identifier.
         'user_id', // FK to user model (one-to-one relation)
         'name',
         'avatar',
