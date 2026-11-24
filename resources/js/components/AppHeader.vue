@@ -32,16 +32,36 @@ const props = withDefaults(defineProps<Props>(), {
     breadcrumbs: () => [],
 });
 
-const page = usePage();
+const page = usePage<{
+    auth: {
+        user: {
+            name: string;
+            avatar?: string | null;
+            battletag?: string | null;
+        };
+    };
+}>();
 const auth = computed(() => page.props.auth);
 const { isCurrentUrl } = useCurrentUrl();
 
-const navItems: NavItem[] = [
-    { title: 'Dashboard', href: dashboard() },
-    { title: 'Coach Winston', href: '/chat' },
-    { title: 'Pricing', href: '/pricing' },
-    { title: 'About Us', href: '/about-us' },
-];
+const navItems = computed<NavItem[]>(() => {
+    const items: NavItem[] = [
+        { title: 'Dashboard', href: dashboard() },
+        { title: 'Coach Winston', href: '/chat' },
+        { title: 'Pricing', href: '/pricing' },
+        { title: 'About Us', href: '/about-us' },
+    ];
+    const battleTag = auth.value.user.battletag;
+
+    if (battleTag) {
+        items.splice(1, 0, {
+            title: 'Statistics',
+            href: `/${encodeURIComponent(battleTag)}/stats`,
+        });
+    }
+
+    return items;
+});
 </script>
 
 <template>
