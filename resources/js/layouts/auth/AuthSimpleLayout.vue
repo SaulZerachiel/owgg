@@ -1,5 +1,6 @@
 <script setup lang="ts">
 import { Link } from '@inertiajs/vue3';
+import AppFooter from '@/components/AppFooter.vue';
 import AppLogo from '@/components/AppLogo.vue';
 import { home } from '@/routes';
 
@@ -24,35 +25,39 @@ defineProps<{
             <slot />
             <p class="auth-footer">PLAYER PERFORMANCE // SECURE ACCESS</p>
         </main>
+        <AppFooter />
     </div>
 </template>
 
 <style scoped>
 .owgg-auth-shell {
     position: relative;
-    display: grid;
+    display: flex;
     min-height: 100svh;
-    place-items: center;
-    overflow: hidden;
+    flex-direction: column;
+    align-items: center;
+    justify-content: center;
+    gap: 6px;
+    overflow-x: hidden;
+    overflow-y: auto;
     isolation: isolate;
     padding: 28px 18px;
     background:
-        radial-gradient(circle at 82% 18%, #174056 0, transparent 34%),
-        radial-gradient(circle at 12% 90%, #f0643214 0, transparent 30%),
-        linear-gradient(135deg, #091019, #111d29 58%, #0a1119);
-    color: #eef6f8;
+        radial-gradient(ellipse at 82% 14%, var(--bg-3) 0, transparent 44%),
+        var(--bg-0);
+    color: var(--text);
 }
 
 .owgg-auth-shell::before {
     position: absolute;
     inset: 0;
     z-index: 0;
-    background-image:
-        linear-gradient(#8fd9e915 1px, transparent 1px),
-        linear-gradient(90deg, #8fd9e915 1px, transparent 1px);
-    background-size: 44px 44px;
+    background-image: repeating-linear-gradient(
+        135deg,
+        transparent 0 16px,
+        var(--surface-line) 16px 17px
+    );
     content: '';
-    opacity: 0.28;
     pointer-events: none;
 }
 
@@ -61,13 +66,10 @@ defineProps<{
     top: 50%;
     left: 50%;
     z-index: 0;
-    width: min(80vw, 680px);
+    width: min(74vw, 600px);
     aspect-ratio: 1;
-    border: 1px solid #a9e8ff12;
-    border-radius: 50%;
-    box-shadow:
-        0 0 0 48px #a9e8ff08,
-        0 0 0 96px #a9e8ff05;
+    border: 1px solid var(--surface-line);
+    clip-path: polygon(50% 0, 100% 50%, 50% 100%, 0 50%);
     pointer-events: none;
     transform: translate(-50%, -50%);
 }
@@ -77,10 +79,23 @@ defineProps<{
     z-index: 1;
     width: min(100%, 430px);
     padding: clamp(24px, 6vw, 38px);
-    border: 1px solid #a9e8ff38;
-    border-top: 2px solid #f06432;
-    background: linear-gradient(145deg, #10202df2, #09131df5);
-    box-shadow: 0 24px 80px #03080db3;
+    border: 1px solid var(--surface-line-strong);
+    border-top: 3px solid var(--ow-orange);
+    background: var(--bg-2);
+    clip-path: polygon(
+        0 0,
+        calc(100% - 22px) 0,
+        100% 22px,
+        100% 100%,
+        16px 100%,
+        0 calc(100% - 16px)
+    );
+}
+
+.owgg-auth-shell :deep(.owgg-legal-footer) {
+    width: min(100%, 430px);
+    padding: 10px 4px;
+    border-top: 0;
 }
 
 .auth-brand {
@@ -97,7 +112,7 @@ defineProps<{
 
 .auth-eyebrow,
 .auth-footer {
-    color: #f06432;
+    color: var(--ow-orange);
     font-size: 0.62rem;
     font-weight: 800;
     letter-spacing: 0.16em;
@@ -112,11 +127,13 @@ defineProps<{
     font-size: clamp(1.45rem, 5vw, 1.8rem);
     font-weight: 850;
     letter-spacing: -0.035em;
+    text-transform: uppercase;
+    font-style: italic;
 }
 
 .auth-heading > p:last-child {
     margin: 0;
-    color: #9ab2bd;
+    color: var(--text-dim);
     font-size: 0.9rem;
     line-height: 1.55;
 }
@@ -124,8 +141,8 @@ defineProps<{
 .auth-footer {
     margin: 26px 0 0;
     padding-top: 14px;
-    border-top: 1px solid #a9e8ff20;
-    color: #78909c;
+    border-top: 1px solid var(--surface-line);
+    color: var(--text-mute);
     font-size: 0.56rem;
 }
 

@@ -1,4 +1,5 @@
 <script setup lang="ts">
+import AppFooter from '@/components/AppFooter.vue';
 import AppContent from '@/components/AppContent.vue';
 import AppHeader from '@/components/AppHeader.vue';
 import AppShell from '@/components/AppShell.vue';
@@ -19,6 +20,7 @@ withDefaults(defineProps<Props>(), {
         <AppHeader :breadcrumbs="breadcrumbs" />
         <AppContent variant="header">
             <slot />
+            <AppFooter />
         </AppContent>
         <Toaster />
     </AppShell>

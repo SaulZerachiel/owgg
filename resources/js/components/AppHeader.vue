@@ -148,27 +148,29 @@ const navItems = computed<NavItem[]>(() => {
 .owgg-header {
     position: relative;
     z-index: 20;
-    border-bottom: 1px solid
-        color-mix(in srgb, var(--owgg-cyan) 12%, transparent);
-    background: linear-gradient(90deg, #0d1b27 0%, #0a1119 72%, #112c3b 100%);
-    color: #eef6f8;
-    font-family: 'Arial Narrow', 'Trebuchet MS', sans-serif;
+    border-bottom: 1px solid var(--surface-line);
+    background: var(--bg-1);
+    color: var(--text);
+    font-family: var(--font-heading);
 }
 
 .owgg-header::after {
     position: absolute;
     inset: 0;
-    z-index: -1;
+    z-index: 0;
     pointer-events: none;
     content: '';
-    opacity: 0.1;
-    background-image:
-        linear-gradient(#8fd9e915 1px, transparent 1px),
-        linear-gradient(90deg, #8fd9e915 1px, transparent 1px);
-    background-size: 32px 32px;
+    opacity: 0.05;
+    background-image: repeating-linear-gradient(
+        135deg,
+        transparent 0 14px,
+        var(--surface-line) 14px 15px
+    );
 }
 
 .owgg-header-inner {
+    position: relative;
+    z-index: 1;
     display: flex;
     width: 100%;
     min-height: 76px;
@@ -193,15 +195,16 @@ const navItems = computed<NavItem[]>(() => {
     position: relative;
     display: flex;
     align-items: center;
-    color: #a7bec7;
+    color: var(--text-dim);
     font-size: 0.72rem;
     font-weight: 800;
     letter-spacing: 0.11em;
     text-decoration: none;
     text-transform: uppercase;
     transition:
-        color 0.2s,
-        background 0.2s;
+        color 150ms cubic-bezier(0.2, 0.8, 0.2, 1),
+        background-color 150ms cubic-bezier(0.2, 0.8, 0.2, 1);
+    font-style: italic;
 }
 
 .owgg-nav-link {
@@ -212,22 +215,29 @@ const navItems = computed<NavItem[]>(() => {
 .owgg-nav-link.is-active,
 .owgg-mobile-link:hover,
 .owgg-mobile-link.is-active {
-    color: #eef6f8;
+    color: var(--text);
 }
 
 .owgg-nav-link.is-active {
-    background: color-mix(in srgb, var(--owgg-orange) 10%, transparent);
+    background: color-mix(in srgb, var(--ow-orange) 10%, transparent);
 }
 
-.owgg-nav-link.is-active::after {
+.owgg-nav-link::after {
     position: absolute;
     right: 12px;
     bottom: 0;
     left: 12px;
     height: 3px;
-    background: var(--owgg-orange);
-    box-shadow: 0 0 12px var(--owgg-orange);
+    background: var(--ow-orange);
     content: '';
+    transform: scaleX(0) skewX(-18deg);
+    transform-origin: left;
+    transition: transform 160ms cubic-bezier(0.2, 0.8, 0.2, 1);
+}
+
+.owgg-nav-link:hover::after,
+.owgg-nav-link.is-active::after {
+    transform: scaleX(1) skewX(-18deg);
 }
 
 .owgg-profile-trigger {
@@ -235,19 +245,19 @@ const navItems = computed<NavItem[]>(() => {
     margin-left: auto;
     padding: 5px 0 5px 14px;
     border: 0;
-    border-left: 1px solid #a9e8ff44;
+    border-left: 1px solid var(--surface-line-strong);
     border-radius: 0;
-    color: #eef6f8;
+    color: var(--text);
 }
 
 .owgg-profile-trigger:hover {
-    background: #18384b;
+    background: var(--bg-3);
 }
 
 .owgg-profile-name {
     max-width: 150px;
     overflow: hidden;
-    color: #a7bec7;
+    color: var(--text-dim);
     font-size: 0.68rem;
     letter-spacing: 0.08em;
     text-overflow: ellipsis;
@@ -255,28 +265,27 @@ const navItems = computed<NavItem[]>(() => {
 }
 
 .owgg-profile-avatar {
-    border: 1px solid var(--owgg-orange);
-    box-shadow:
-        0 0 0 3px color-mix(in srgb, var(--owgg-orange) 12%, transparent),
-        0 0 14px color-mix(in srgb, var(--owgg-orange) 22%, transparent);
+    clip-path: polygon(0 0, calc(100% - 7px) 0, 100% 7px, 100% 100%, 0 100%);
+    border: 1px solid var(--ow-orange);
+    box-shadow: 0 0 0 2px color-mix(in srgb, var(--ow-orange) 15%, transparent);
 }
 
 .owgg-avatar-fallback {
-    background: var(--owgg-orange);
-    color: #17171a;
+    background: var(--ow-orange);
+    color: var(--bg-0);
     font-weight: 900;
 }
 
 .owgg-mobile-trigger {
-    border: 1px solid #a9e8ff44;
+    border: 1px solid var(--surface-line-strong);
     border-radius: 0;
     background: transparent;
-    color: #a9e8ff;
+    color: var(--role-tank);
 }
 
 .owgg-mobile-menu {
-    background: #0a1119;
-    color: #eef6f8;
+    background: var(--bg-1);
+    color: var(--text);
 }
 
 .owgg-mobile-link {
@@ -285,18 +294,20 @@ const navItems = computed<NavItem[]>(() => {
 }
 
 .owgg-mobile-link.is-active {
-    border-left-color: var(--owgg-orange);
-    background: color-mix(in srgb, var(--owgg-orange) 10%, transparent);
+    border-left-color: var(--ow-orange);
+    background: color-mix(in srgb, var(--ow-orange) 10%, transparent);
 }
 
 .owgg-breadcrumbs {
+    position: relative;
+    z-index: 1;
     display: flex;
     width: min(1280px, calc(100% - 40px));
     min-height: 40px;
     align-items: center;
     margin-inline: auto;
-    border-top: 1px solid #a9e8ff12;
-    color: #88a6b2;
+    border-top: 1px solid var(--surface-line);
+    color: var(--text-dim);
 }
 
 @media (max-width: 640px) {

@@ -57,6 +57,16 @@ const formattedHeroSpecificStats = computed(() =>
         rowKey: `${stat.hero}-${stat.key}-${index}`,
     })),
 );
+const rankColors: Record<string, string> = {
+    bronze: 'var(--rank-bronze)',
+    silver: 'var(--rank-silver)',
+    gold: 'var(--rank-gold)',
+    platinum: 'var(--rank-platinum)',
+    diamond: 'var(--rank-diamond)',
+    master: 'var(--rank-master)',
+    grandmaster: 'var(--rank-grandmaster)',
+    champion: 'var(--rank-champion)',
+};
 let refreshTimer: ReturnType<typeof setInterval> | undefined;
 
 onMounted(() => {
@@ -109,6 +119,13 @@ function updatedAt(value: string | null): string {
         timeStyle: 'short',
     }).format(new Date(value));
 }
+
+function rankColor(tier: string | null): string {
+    return (
+        rankColors[tier?.toLowerCase().replaceAll(' ', '') ?? ''] ??
+        'var(--text-dim)'
+    );
+}
 </script>
 
 <template>
@@ -116,7 +133,6 @@ function updatedAt(value: string | null): string {
 
     <main class="statistics-page">
         <div class="statistics-grid" aria-hidden="true"></div>
-        <div class="statistics-glow" aria-hidden="true"></div>
 
         <div class="statistics-content">
             <header class="statistics-header">
@@ -131,12 +147,15 @@ function updatedAt(value: string | null): string {
             </header>
 
             <section v-if="isSyncing" class="empty-state" role="status">
-                <p class="eyebrow">DATA LINK // OVERFAST</p>
-                <h2>Synchronizing statistics</h2>
-                <p>
-                    Your PC competitive statistics are being imported. This page
-                    will update when the import completes.
-                </p>
+                <div class="sync-loader" aria-hidden="true"></div>
+                <div>
+                    <p class="eyebrow">DATA LINK // OVERFAST</p>
+                    <h2>Synchronizing statistics</h2>
+                    <p>
+                        Your PC competitive statistics are being imported. This
+                        page will update when the import completes.
+                    </p>
+                </div>
             </section>
 
             <section v-else-if="!profile" class="empty-state" role="status">
@@ -183,10 +202,21 @@ function updatedAt(value: string | null): string {
                             v-for="rank in ranks"
                             :key="`${rank.role}-${rank.season}`"
                             class="rank-card"
-                            :class="`rank-card--${rank.role.toLowerCase()}`"
+                            :data-role="rank.role.toLowerCase()"
                         >
-                            <p>{{ rank.role }}</p>
-                            <strong>
+                            <p class="rank-role">
+                                <span
+                                    class="role-mark"
+                                    aria-hidden="true"
+                                ></span>
+                                {{ rank.role }}
+                            </p>
+                            <strong
+                                class="rank-badge"
+                                :style="{
+                                    '--rank-color': rankColor(rank.tier),
+                                }"
+                            >
                                 {{ rank.tier ?? 'Unranked' }}
                                 <span v-if="rank.division">
                                     {{ rank.division }}
@@ -222,8 +252,15 @@ function updatedAt(value: string | null): string {
                             v-for="role in rolesStats"
                             :key="role.role"
                             class="data-card"
+                            :data-role="role.role.toLowerCase()"
                         >
-                            <h3>{{ role.role }}</h3>
+                            <h3>
+                                <span
+                                    class="role-mark"
+                                    aria-hidden="true"
+                                ></span>
+                                {{ role.role }}
+                            </h3>
                             <MetricGrid :metrics="role.metrics" />
                         </article>
                     </div>
@@ -305,57 +342,43 @@ function updatedAt(value: string | null): string {
 
 <style scoped>
 .statistics-page {
-    --orange: var(--owgg-orange);
-    --blue: var(--owgg-cyan);
+    --orange: var(--ow-orange);
+    --blue: var(--role-tank);
     position: relative;
     min-height: calc(100vh - 65px);
     overflow: hidden;
     background:
-        radial-gradient(circle at 78% 12%, #18384b 0, transparent 40%),
-        linear-gradient(125deg, #091019 0%, #111d29 58%, #0a1119 100%);
-    color: #eef6f8;
-    font-family: 'Arial Narrow', 'Trebuchet MS', sans-serif;
-}
-
-.statistics-grid,
-.statistics-glow {
-    position: absolute;
-    pointer-events: none;
+        radial-gradient(ellipse at 86% 4%, var(--bg-3) 0, transparent 38%),
+        var(--bg-0);
+    color: var(--text);
+    font-family: var(--font-ui);
 }
 
 .statistics-grid {
+    position: absolute;
     inset: 0;
-    opacity: 0.12;
-    background-image:
-        linear-gradient(#8fd9e915 1px, transparent 1px),
-        linear-gradient(90deg, #8fd9e915 1px, transparent 1px);
-    background-size: 46px 46px;
-}
-
-.statistics-glow {
-    top: 34%;
-    right: -15%;
-    width: 32vw;
-    height: 32vw;
-    border-radius: 999px;
-    background: var(--orange);
-    filter: blur(100px);
-    opacity: 0.1;
+    opacity: 0.04;
+    background-image: repeating-linear-gradient(
+        135deg,
+        transparent 0 15px,
+        var(--text) 15px 16px
+    );
+    pointer-events: none;
 }
 
 .statistics-content {
     position: relative;
     z-index: 1;
-    width: min(1120px, calc(100% - 48px));
+    width: min(1180px, calc(100% - 48px));
     margin-inline: auto;
-    padding: 40px 0 64px;
+    padding: 36px 0 56px;
 }
 
 .statistics-header,
 .profile-banner,
 .statistics-section,
 .empty-state {
-    animation: statistics-enter 0.4s ease-out both;
+    animation: statistics-enter 300ms cubic-bezier(0.2, 0.8, 0.2, 1) both;
 }
 
 .statistics-header {
@@ -370,7 +393,9 @@ function updatedAt(value: string | null): string {
     margin: 0 0 8px;
     color: var(--orange);
     font-size: 0.68rem;
+    font-weight: 800;
     letter-spacing: 0.18em;
+    text-transform: uppercase;
 }
 
 h1,
@@ -386,11 +411,12 @@ h1 {
     font-weight: 900;
     letter-spacing: -0.06em;
     line-height: 0.95;
+    font-style: italic;
+    text-transform: uppercase;
 }
 
 h1 strong {
-    color: transparent;
-    -webkit-text-stroke: 1px var(--blue);
+    color: var(--orange);
 }
 
 .player-id,
@@ -399,7 +425,7 @@ h1 strong {
 .empty-copy,
 .empty-state > p:last-child {
     margin-bottom: 0;
-    color: #a7bec7;
+    color: var(--text-dim);
     font-size: 0.9rem;
 }
 
@@ -407,6 +433,9 @@ h1 strong {
     font-size: 0.65rem;
     letter-spacing: 0.12em;
     white-space: nowrap;
+    font-family: var(--font-heading);
+    font-weight: 800;
+    text-transform: uppercase;
 }
 
 .profile-banner,
@@ -416,28 +445,34 @@ h1 strong {
 .rank-card,
 .hero-details,
 .table-wrap {
-    border: 1px solid #a9e8ff30;
-    background: linear-gradient(140deg, #10202ddd 0%, #09131dee 75%), #09151f;
-    box-shadow: 0 16px 38px #050b1266;
+    border: 1px solid var(--surface-line-strong);
+    background: var(--bg-1);
+    clip-path: polygon(
+        0 0,
+        calc(100% - 16px) 0,
+        100% 16px,
+        100% 100%,
+        16px 100%,
+        0 calc(100% - 16px)
+    );
 }
 
 .profile-banner {
+    position: relative;
     display: flex;
     align-items: center;
     gap: 18px;
     padding: 22px 26px;
-    border-left: 3px solid var(--orange);
-    background:
-        radial-gradient(circle at 90% 50%, #1a3b4e55, transparent 38%),
-        linear-gradient(120deg, #132737 0%, #09131d 75%);
+    border-left: 4px solid var(--orange);
+    background: var(--bg-2);
 }
 
 .avatar {
     width: 64px;
     height: 64px;
     flex: 0 0 auto;
-    border: 1px solid #a9e8ff80;
-    box-shadow: 0 0 24px #a9e8ff1c;
+    border: 2px solid var(--ow-orange);
+    clip-path: polygon(0 0, calc(100% - 12px) 0, 100% 12px, 100% 100%, 0 100%);
     object-fit: cover;
 }
 
@@ -451,6 +486,8 @@ h1 strong {
 .profile-banner h2 {
     margin-bottom: 4px;
     font-size: 1.5rem;
+    font-style: italic;
+    text-transform: uppercase;
 }
 
 .profile-title {
@@ -459,24 +496,38 @@ h1 strong {
 
 .statistics-section,
 .empty-state {
+    position: relative;
     margin-top: 16px;
     padding: 22px;
+    background: var(--bg-1);
+}
+
+.statistics-section::before {
+    position: absolute;
+    top: 0;
+    left: 0;
+    width: 34px;
+    height: 3px;
+    background: var(--ow-orange);
+    content: '';
 }
 
 .section-heading {
     display: block;
     margin-bottom: 18px;
     padding-bottom: 13px;
-    border-bottom: 1px solid #a9e8ff20;
+    border-bottom: 1px solid var(--surface-line);
 }
 
 .section-heading h2,
 .empty-state h2 {
     margin-bottom: 0;
-    color: #eef6f8;
+    color: var(--text);
     font-size: clamp(1.25rem, 2.5vw, 1.55rem);
     font-weight: 850;
     letter-spacing: 0.02em;
+    font-style: italic;
+    text-transform: uppercase;
 }
 
 .rank-grid {
@@ -489,12 +540,25 @@ h1 strong {
     position: relative;
     overflow: hidden;
     padding: 16px;
-    background:
-        radial-gradient(circle at 100% 0, #a9e8ff0d, transparent 55%),
-        linear-gradient(145deg, #132433, #09131d);
+    background: var(--bg-2);
     transition:
-        transform 0.2s ease,
-        border-color 0.2s ease;
+        transform 150ms cubic-bezier(0.2, 0.8, 0.2, 1),
+        border-color 150ms cubic-bezier(0.2, 0.8, 0.2, 1);
+}
+
+.rank-card[data-role],
+.data-card[data-role] {
+    --role-color: var(--role-tank);
+}
+
+.rank-card[data-role='damage'],
+.data-card[data-role='damage'] {
+    --role-color: var(--role-damage);
+}
+
+.rank-card[data-role='support'],
+.data-card[data-role='support'] {
+    --role-color: var(--role-support);
 }
 
 .rank-card::before {
@@ -502,49 +566,62 @@ h1 strong {
     top: 0;
     bottom: 0;
     left: 0;
-    width: 3px;
-    background: var(--blue);
+    width: 4px;
+    background: var(--role-color);
     content: '';
 }
 
-.rank-card--damage::before {
-    background: var(--orange);
-}
-
-.rank-card--support::before {
-    background: #b7a3ff;
-}
-
 .rank-card:hover {
-    transform: translateY(-2px);
-    border-color: #a9e8ff70;
+    transform: translateY(-3px);
+    border-color: color-mix(in srgb, var(--role-color) 58%, transparent);
 }
 
-.rank-card p {
+.rank-role {
+    display: flex;
+    align-items: center;
+    gap: 8px;
     margin-bottom: 12px;
-    color: #a7bec7;
+    color: var(--role-color);
+    font-family: var(--font-heading);
+    font-size: 0.7rem;
+    font-weight: 800;
+    letter-spacing: 0.12em;
     text-transform: capitalize;
 }
 
-.rank-card strong {
-    display: block;
-    color: var(--blue);
+.role-mark {
+    display: inline-block;
+    width: 11px;
+    height: 11px;
+    flex: 0 0 auto;
+    background: var(--role-color, var(--ow-orange));
+    clip-path: polygon(50% 0, 100% 50%, 50% 100%, 0 50%);
+}
+
+.rank-badge {
+    display: inline-flex;
+    align-items: baseline;
+    gap: 8px;
+    padding: 5px 9px;
+    border: 1px solid color-mix(in srgb, var(--rank-color) 46%, transparent);
+    background: color-mix(in srgb, var(--rank-color) 12%, transparent);
+    clip-path: polygon(0 0, calc(100% - 9px) 0, 100% 9px, 100% 100%, 0 100%);
+    color: var(--rank-color);
     font-size: 1.2rem;
     text-transform: capitalize;
 }
 
-.rank-card--damage strong {
-    color: #ff9a70;
-}
-
-.rank-card--support strong {
-    color: #c4b5ff;
+.rank-badge span {
+    font-size: 0.85rem;
+    font-variant-numeric: tabular-nums;
 }
 
 .rank-card small {
     display: block;
     margin-top: 8px;
-    color: #88a6b2;
+    color: var(--text-mute);
+    font-family: var(--font-heading);
+    letter-spacing: 0.08em;
 }
 
 .stack {
@@ -561,14 +638,19 @@ h1 strong {
 .data-card,
 .hero-details {
     padding: 16px;
+    background: var(--bg-2);
 }
 
 .data-card h3 {
+    display: flex;
+    align-items: center;
+    gap: 8px;
     margin-bottom: 16px;
-    color: var(--blue);
+    color: var(--role-color, var(--ow-orange));
     font-size: 1.1rem;
     font-weight: 800;
     text-transform: capitalize;
+    font-style: italic;
 }
 
 .hero-details summary {
@@ -578,16 +660,20 @@ h1 strong {
     align-items: center;
     justify-content: space-between;
     gap: 16px;
-    color: var(--blue);
+    color: var(--text);
+    font-family: var(--font-heading);
+    font-size: 1rem;
+    font-weight: 800;
+    text-transform: uppercase;
 }
 
 .hero-details summary:focus-visible {
-    outline: 2px solid var(--orange);
+    outline: 2px solid var(--ow-orange);
     outline-offset: 4px;
 }
 
 .hero-details summary span {
-    color: #88a6b2;
+    color: var(--text-dim);
     font-size: 0.8rem;
 }
 
@@ -608,31 +694,41 @@ table {
 th,
 td {
     padding: 13px 15px;
-    border-bottom: 1px solid #a9e8ff20;
+    border-bottom: 1px solid var(--surface-line);
 }
 
 th {
-    color: var(--orange);
+    color: var(--text-dim);
     font-size: 0.68rem;
     letter-spacing: 0.12em;
     text-transform: uppercase;
+    font-family: var(--font-heading);
 }
 
 td {
-    color: #d3e2e7;
+    color: var(--text);
 }
 
 tbody tr {
-    transition: background-color 0.18s ease;
+    transition: background-color 150ms cubic-bezier(0.2, 0.8, 0.2, 1);
+}
+
+tbody tr:nth-child(even) {
+    background: var(--bg-2);
 }
 
 tbody tr:hover {
-    background: #a9e8ff0a;
+    background: var(--bg-3);
+}
+
+tbody tr:hover td:first-child {
+    box-shadow: inset 3px 0 0 var(--ow-orange);
 }
 
 td:last-child {
-    color: #d7f4ff;
+    color: var(--text);
     font-weight: 800;
+    font-variant-numeric: tabular-nums;
     white-space: nowrap;
 }
 
@@ -644,9 +740,9 @@ td:last-child {
     display: inline-flex;
     margin-left: 8px;
     padding: 3px 7px;
-    border: 1px solid #f0643252;
-    background: #f0643212;
-    color: #ff9a70;
+    border: 1px solid color-mix(in srgb, var(--ow-orange) 50%, transparent);
+    background: color-mix(in srgb, var(--ow-orange) 11%, var(--bg-1));
+    color: var(--ow-orange-bright);
     font-size: 0.62rem;
     font-weight: 800;
     letter-spacing: 0.08em;
@@ -660,8 +756,11 @@ tbody tr:last-child td {
 }
 
 .empty-state {
+    display: flex;
+    align-items: center;
+    gap: 20px;
     padding: 28px;
-    border-left: 3px solid var(--orange);
+    border-left: 4px solid var(--orange);
 }
 
 .empty-state h2 {
@@ -673,6 +772,25 @@ tbody tr:last-child td {
     line-height: 1.65;
 }
 
+.sync-loader {
+    width: 34px;
+    height: 34px;
+    flex: 0 0 auto;
+    border: 3px solid var(--surface-line-strong);
+    border-top-color: var(--ow-orange);
+    border-right-color: var(--ow-orange);
+    clip-path: polygon(25% 0, 75% 0, 100% 50%, 75% 100%, 25% 100%, 0 50%);
+    animation: statistics-loader 750ms linear infinite;
+}
+
+.empty-state > div > p:last-child {
+    max-width: 62ch;
+    margin-bottom: 0;
+    color: var(--text-dim);
+    font-size: 0.9rem;
+    line-height: 1.65;
+}
+
 @keyframes statistics-enter {
     from {
         opacity: 0;
@@ -681,6 +799,12 @@ tbody tr:last-child td {
     to {
         opacity: 1;
         transform: translateY(0);
+    }
+}
+
+@keyframes statistics-loader {
+    to {
+        transform: rotate(360deg);
     }
 }
 
@@ -696,6 +820,10 @@ tbody tr:last-child td {
 
     .rank-card:hover {
         transform: none;
+    }
+
+    .sync-loader {
+        animation: none;
     }
 }
 
@@ -714,6 +842,11 @@ tbody tr:last-child td {
     .statistics-section,
     .empty-state {
         padding: 16px;
+    }
+
+    .empty-state {
+        align-items: flex-start;
+        gap: 14px;
     }
 
     .profile-banner {

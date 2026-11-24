@@ -1,5 +1,6 @@
 <script setup lang="ts">
 import { Head, Link } from '@inertiajs/vue3';
+import AppFooter from '@/components/AppFooter.vue';
 import { dashboard, login, register } from '@/routes';
 </script>
 
@@ -8,12 +9,10 @@ import { dashboard, login, register } from '@/routes';
 
     <main class="owgg-menu">
         <div class="owgg-grid" aria-hidden="true"></div>
-        <div class="owgg-glow owgg-glow-left" aria-hidden="true"></div>
-        <div class="owgg-glow owgg-glow-right" aria-hidden="true"></div>
 
         <header class="owgg-header">
             <div class="owgg-mark">
-                <span class="owgg-mark-icon">✦</span>
+                <span class="owgg-mark-icon" aria-hidden="true"></span>
                 <span>OWGG</span>
             </div>
             <span class="owgg-season">PERFORMANCE // SEASON 01</span>
@@ -30,7 +29,10 @@ import { dashboard, login, register } from '@/routes';
 
                 <div class="owgg-actions">
                     <a href="/auth/battlenet" class="owgg-primary-action">
-                        <span class="owgg-action-icon">◈</span>
+                        <span
+                            class="owgg-action-icon"
+                            aria-hidden="true"
+                        ></span>
                         <span>
                             <small>CONNEXION RECOMMANDÉE</small>
                             SE CONNECTER AVEC BATTLE.NET
@@ -51,7 +53,7 @@ import { dashboard, login, register } from '@/routes';
                 <div class="owgg-ring owgg-ring-inner"></div>
                 <div class="owgg-cross owgg-cross-horizontal"></div>
                 <div class="owgg-cross owgg-cross-vertical"></div>
-                <div class="owgg-core">✦</div>
+                <div class="owgg-core"></div>
             </div>
         </section>
 
@@ -62,55 +64,36 @@ import { dashboard, login, register } from '@/routes';
                 Retourner au tableau de bord →
             </Link>
         </footer>
+        <AppFooter />
     </main>
 </template>
 
 <style scoped>
 .owgg-menu {
-    --orange: #f06432;
-    --blue: #a9e8ff;
+    --orange: var(--ow-orange);
+    --blue: var(--role-tank);
     position: relative;
     display: flex;
     min-height: 100vh;
     flex-direction: column;
-    overflow: hidden;
+    overflow: clip;
     background:
-        radial-gradient(circle at 72% 48%, #18384b 0, #0d1b27 22%, transparent 48%),
-        linear-gradient(125deg, #091019 0%, #111d29 58%, #0a1119 100%);
-    color: #eef6f8;
-    font-family: 'Arial Narrow', 'Trebuchet MS', sans-serif;
+        radial-gradient(ellipse at 74% 44%, var(--bg-3) 0, transparent 40%),
+        var(--bg-0);
+    color: var(--text);
+    font-family: var(--font-ui);
 }
 
 .owgg-grid {
     position: absolute;
     inset: 0;
-    opacity: 0.18;
-    background-image:
-        linear-gradient(#8fd9e915 1px, transparent 1px),
-        linear-gradient(90deg, #8fd9e915 1px, transparent 1px);
-    background-size: 46px 46px;
-    transform: perspective(500px) rotateX(55deg) scale(1.5) translateY(28%);
-}
-
-.owgg-glow {
-    position: absolute;
-    width: 40vw;
-    height: 40vw;
-    border-radius: 999px;
-    filter: blur(80px);
-    opacity: 0.16;
-}
-
-.owgg-glow-left {
-    top: 20%;
-    left: -20%;
-    background: var(--orange);
-}
-
-.owgg-glow-right {
-    right: -15%;
-    bottom: -25%;
-    background: var(--blue);
+    opacity: 0.045;
+    background-image: repeating-linear-gradient(
+        135deg,
+        transparent 0 15px,
+        var(--text) 15px 16px
+    );
+    pointer-events: none;
 }
 
 .owgg-header,
@@ -134,20 +117,25 @@ import { dashboard, login, register } from '@/routes';
     display: flex;
     align-items: center;
     gap: 10px;
-    font-size: 1.15rem;
+    font-family: var(--font-heading);
+    font-size: 1.25rem;
     font-weight: 900;
+    font-style: italic;
+    letter-spacing: 0.1em;
 }
 
 .owgg-mark-icon {
-    color: var(--orange);
-    font-size: 1.8rem;
-    line-height: 1;
+    width: 18px;
+    height: 18px;
+    border: 2px solid var(--orange);
+    clip-path: polygon(50% 0, 100% 50%, 50% 100%, 0 50%);
+    background: color-mix(in srgb, var(--orange) 35%, transparent);
 }
 
 .owgg-season,
 .owgg-eyebrow,
 .owgg-footer {
-    color: #88a6b2;
+    color: var(--text-dim);
     font-size: 0.68rem;
     letter-spacing: 0.18em;
 }
@@ -168,6 +156,7 @@ import { dashboard, login, register } from '@/routes';
 .owgg-eyebrow {
     margin-bottom: 20px;
     color: var(--orange);
+    font-weight: 800;
 }
 
 h1 {
@@ -176,17 +165,18 @@ h1 {
     font-weight: 900;
     letter-spacing: -0.08em;
     line-height: 0.78;
+    font-style: italic;
+    text-transform: uppercase;
 }
 
 h1 strong {
-    color: transparent;
-    -webkit-text-stroke: 2px var(--blue);
+    color: var(--orange);
 }
 
 .owgg-description {
     max-width: 390px;
     margin: 34px 0;
-    color: #b6c8ce;
+    color: var(--text-dim);
     font-size: 1rem;
     line-height: 1.6;
 }
@@ -205,19 +195,56 @@ h1 strong {
     min-width: min(100%, 430px);
     padding: 16px 20px;
     border: 0;
+    position: relative;
+    overflow: hidden;
     background: var(--orange);
-    color: #17171a;
+    color: var(--bg-0);
     font-size: 0.9rem;
     font-weight: 900;
     letter-spacing: 0.05em;
     text-decoration: none;
-    clip-path: polygon(0 0, 94% 0, 100% 50%, 94% 100%, 0 100%, 3% 50%);
-    transition: filter 0.2s, transform 0.2s;
+    clip-path: polygon(
+        0 0,
+        calc(100% - 18px) 0,
+        100% 50%,
+        calc(100% - 18px) 100%,
+        0 100%,
+        8px 50%
+    );
+    transition:
+        filter 150ms cubic-bezier(0.2, 0.8, 0.2, 1),
+        transform 150ms cubic-bezier(0.2, 0.8, 0.2, 1),
+        box-shadow 150ms cubic-bezier(0.2, 0.8, 0.2, 1);
+}
+
+.owgg-primary-action::after {
+    position: absolute;
+    inset: 0;
+    background: linear-gradient(
+        110deg,
+        transparent 35%,
+        var(--surface-highlight) 50%,
+        transparent 65%
+    );
+    content: '';
+    transform: translateX(-120%);
+    transition: transform 220ms cubic-bezier(0.2, 0.8, 0.2, 1);
 }
 
 .owgg-primary-action:hover {
-    filter: brightness(1.15);
-    transform: translateX(5px);
+    box-shadow: 0 0 20px var(--ow-orange-glow);
+    filter: brightness(1.04);
+    transform: translateX(3px);
+}
+
+.owgg-primary-action:hover::after {
+    transform: translateX(120%);
+}
+
+.owgg-primary-action:focus-visible,
+.owgg-secondary-action:focus-visible {
+    outline: 2px solid var(--ow-orange-bright);
+    outline-offset: 4px;
 }
 
 .owgg-primary-action small {
@@ -228,7 +255,11 @@ h1 strong {
 }
 
 .owgg-action-icon {
-    font-size: 1.6rem;
+    width: 22px;
+    height: 22px;
+    flex: 0 0 auto;
+    border: 2px solid currentColor;
+    clip-path: polygon(50% 0, 100% 50%, 50% 100%, 0 50%);
 }
 
 .owgg-arrow {
@@ -239,7 +270,7 @@ h1 strong {
 
 .owgg-secondary-action {
     padding: 4px 18px;
-    color: #a7bec7;
+    color: var(--text-dim);
     font-size: 0.75rem;
     letter-spacing: 0.08em;
     text-decoration: none;
@@ -248,37 +279,35 @@ h1 strong {
 
 .owgg-secondary-action:hover,
 .owgg-footer a:hover {
-    color: var(--blue);
+    color: var(--ow-orange-bright);
 }
 
 .owgg-hero {
     position: relative;
     width: min(43vw, 470px);
     aspect-ratio: 1;
-    opacity: 0.88;
+    opacity: 0.7;
 }
 
 .owgg-ring {
     position: absolute;
     inset: 12%;
-    border: 1px solid #a9e8ff66;
-    border-radius: 50%;
-    box-shadow: 0 0 35px #8bdffc22, inset 0 0 35px #8bdffc11;
+    border: 1px solid color-mix(in srgb, var(--role-tank) 35%, transparent);
+    clip-path: polygon(50% 0, 100% 50%, 50% 100%, 0 50%);
 }
 
 .owgg-ring-outer {
     inset: 1%;
-    border-color: #f0643266;
+    border-color: color-mix(in srgb, var(--ow-orange) 75%, transparent);
     border-width: 2px;
-    border-left-color: transparent;
-    border-bottom-color: transparent;
-    transform: rotate(35deg);
+    clip-path: polygon(50% 0, 100% 50%, 50% 100%, 0 50%);
+    transform: rotate(45deg);
 }
 
 .owgg-ring-inner {
     inset: 25%;
     border-style: dashed;
-    border-color: #a9e8ff88;
+    border-color: color-mix(in srgb, var(--role-tank) 60%, transparent);
     transform: rotate(-25deg);
 }
 
@@ -286,7 +315,7 @@ h1 strong {
     position: absolute;
     top: 50%;
     left: 50%;
-    background: #a9e8ff44;
+    background: color-mix(in srgb, var(--role-tank) 32%, transparent);
     transform: translate(-50%, -50%);
 }
 
@@ -304,19 +333,12 @@ h1 strong {
     position: absolute;
     top: 50%;
     left: 50%;
-    display: grid;
-    width: 100px;
-    height: 100px;
-    place-items: center;
+    width: 72px;
+    height: 72px;
     border: 2px solid var(--orange);
-    color: var(--orange);
-    font-size: 3.2rem;
-    transform: translate(-50%, -50%) rotate(45deg);
-    box-shadow: 0 0 35px #f0643266;
-}
-
-.owgg-core::first-letter {
-    transform: rotate(-45deg);
+    background: color-mix(in srgb, var(--orange) 15%, transparent);
+    clip-path: polygon(50% 0, 100% 50%, 50% 100%, 0 50%);
+    transform: translate(-50%, -50%);
 }
 
 .owgg-footer {
@@ -324,16 +346,17 @@ h1 strong {
     align-items: center;
     gap: 28px;
     padding-bottom: 28px;
+    font-family: var(--font-heading);
 }
 
 .owgg-footer a {
     margin-left: auto;
-    color: #a7bec7;
+    color: var(--text-dim);
     text-decoration: none;
 }
 
 .owgg-status {
-    color: #7fd8ae;
+    color: var(--win);
 }
 
 .owgg-status i {
@@ -341,9 +364,7 @@ h1 strong {
     width: 7px;
     height: 7px;
     margin-right: 7px;
-    border-radius: 50%;
-    background: #7fd8ae;
-    box-shadow: 0 0 10px #7fd8ae;
+    background: var(--win);
 }
 
 @media (max-width: 700px) {
@@ -351,6 +372,17 @@ h1 strong {
     .owgg-footer,
     .owgg-content {
         width: min(100% - 32px, 560px);
+    }
+
+    .owgg-primary-action {
+        clip-path: polygon(
+            0 0,
+            calc(100% - 12px) 0,
+            100% 50%,
+            calc(100% - 12px) 100%,
+            0 100%,
+            5px 50%
+        );
     }
 
     .owgg-season {
@@ -384,6 +416,13 @@ h1 strong {
     .owgg-footer a {
         width: 100%;
         margin-left: 0;
+    }
+}
+
+@media (prefers-reduced-motion: reduce) {
+    .owgg-primary-action,
+    .owgg-primary-action::after {
+        transition: none;
     }
 }
 </style>

@@ -96,18 +96,16 @@ const footerNavItems: NavItem[] = [
 
 <style scoped>
 :deep(.owgg-sidebar) {
-    --sidebar-background: #0a1119;
-    --sidebar-foreground: #b6c8ce;
-    --sidebar-primary: #f06432;
-    --sidebar-primary-foreground: #17171a;
-    --sidebar-accent: #182b38;
-    --sidebar-accent-foreground: #eef6f8;
-    --sidebar-border: #a9e8ff1f;
-    background:
-        radial-gradient(circle at 20% 12%, #18384b 0, transparent 34%),
-        linear-gradient(180deg, #0d1b27 0%, #091019 70%);
-    border-right-color: #a9e8ff1f;
-    font-family: 'Arial Narrow', 'Trebuchet MS', sans-serif;
+    --sidebar-background: var(--bg-1);
+    --sidebar-foreground: var(--text-dim);
+    --sidebar-primary: var(--ow-orange);
+    --sidebar-primary-foreground: var(--bg-0);
+    --sidebar-accent: var(--bg-3);
+    --sidebar-accent-foreground: var(--text);
+    --sidebar-border: var(--surface-line);
+    background: var(--bg-1);
+    border-right-color: var(--surface-line);
+    font-family: var(--font-heading);
 }
 
 :deep(.owgg-sidebar [data-sidebar='sidebar']) {
@@ -119,11 +117,12 @@ const footerNavItems: NavItem[] = [
     inset: 0;
     pointer-events: none;
     content: '';
-    opacity: 0.1;
-    background-image:
-        linear-gradient(#8fd9e915 1px, transparent 1px),
-        linear-gradient(90deg, #8fd9e915 1px, transparent 1px);
-    background-size: 28px 28px;
+    opacity: 0.05;
+    background-image: repeating-linear-gradient(
+        135deg,
+        transparent 0 14px,
+        var(--surface-line) 14px 15px
+    );
 }
 
 :deep(.owgg-sidebar [data-sidebar='sidebar'] > *) {
@@ -132,21 +131,21 @@ const footerNavItems: NavItem[] = [
 }
 
 :deep(.owgg-sidebar [data-sidebar='sidebar'] [data-sidebar='menu-button']) {
-    color: #a7bec7;
+    color: var(--text-dim);
     border-radius: 0;
     letter-spacing: 0.04em;
     transition:
-        background 0.2s,
-        color 0.2s,
-        transform 0.2s;
+        background-color 150ms cubic-bezier(0.2, 0.8, 0.2, 1),
+        color 150ms cubic-bezier(0.2, 0.8, 0.2, 1),
+        transform 150ms cubic-bezier(0.2, 0.8, 0.2, 1);
 }
 
 :deep(
     .owgg-sidebar [data-sidebar='sidebar'] [data-sidebar='menu-button']:hover
 ) {
-    background: #18384b;
-    color: #eef6f8;
-    transform: translateX(3px);
+    background: var(--bg-3);
+    color: var(--text);
+    transform: translateX(2px);
 }
 
 :deep(
@@ -154,14 +153,14 @@ const footerNavItems: NavItem[] = [
         [data-sidebar='sidebar']
         [data-sidebar='menu-button'][data-active='true']
 ) {
-    background: #f06432;
-    color: #17171a;
-    box-shadow: 4px 0 0 #a9e8ff;
+    background: var(--ow-orange);
+    color: var(--bg-0);
+    box-shadow: 4px 0 0 var(--role-tank);
     font-weight: 800;
 }
 
 :deep(.owgg-sidebar [data-sidebar='sidebar'] [data-sidebar='group-label']) {
-    color: #f06432;
+    color: var(--ow-orange);
     font-size: 0.58rem;
     letter-spacing: 0.18em;
 }

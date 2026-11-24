@@ -79,12 +79,20 @@ function formatValue(key: string, value: MetricValue): string {
     position: relative;
     min-width: 0;
     padding: 14px 14px 13px 16px;
-    border: 1px solid #a9e8ff24;
-    background: linear-gradient(145deg, #132433c9, #09131dcc);
+    border: 1px solid var(--surface-line);
+    background: var(--bg-2);
+    clip-path: polygon(
+        0 0,
+        calc(100% - 11px) 0,
+        100% 11px,
+        100% 100%,
+        11px 100%,
+        0 calc(100% - 11px)
+    );
     transition:
-        border-color 0.2s ease,
-        transform 0.2s ease,
-        background-color 0.2s ease;
+        border-color 150ms cubic-bezier(0.2, 0.8, 0.2, 1),
+        transform 150ms cubic-bezier(0.2, 0.8, 0.2, 1),
+        background-color 150ms cubic-bezier(0.2, 0.8, 0.2, 1);
 }
 
 .metric-card::before {
@@ -93,18 +101,20 @@ function formatValue(key: string, value: MetricValue): string {
     bottom: 0;
     left: 0;
     width: 2px;
-    background: #f06432;
+    background: var(--ow-orange);
     content: '';
     opacity: 0.75;
 }
 
 .metric-card:hover {
     transform: translateY(-2px);
-    border-color: #a9e8ff66;
+    border-color: color-mix(in srgb, var(--ow-orange) 48%, transparent);
+    background: var(--bg-3);
 }
 
 .metric-card dt {
-    color: #9ab2bd;
+    color: var(--text-dim);
+    font-family: var(--font-heading);
     font-size: 0.63rem;
     font-weight: 700;
     letter-spacing: 0.1em;
@@ -114,9 +124,10 @@ function formatValue(key: string, value: MetricValue): string {
 
 .metric-card dd {
     margin: 8px 0 0;
-    color: #d7f4ff;
+    color: var(--text);
     font-size: clamp(0.9rem, 2vw, 1.1rem);
     font-weight: 800;
+    font-variant-numeric: tabular-nums;
     overflow-wrap: anywhere;
 }
 

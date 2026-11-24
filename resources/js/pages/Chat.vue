@@ -42,9 +42,11 @@ async function scrollConversationToBottom() {
 }
 
 function csrfToken(): string | undefined {
-    return document
-        .querySelector<HTMLMetaElement>('meta[name="csrf-token"]')
-        ?.getAttribute('content') ?? undefined;
+    return (
+        document
+            .querySelector<HTMLMetaElement>('meta[name="csrf-token"]')
+            ?.getAttribute('content') ?? undefined
+    );
 }
 
 async function selectConversation(conversationId: string) {
@@ -63,7 +65,9 @@ async function selectConversation(conversationId: string) {
         const data = await response.json();
 
         if (!response.ok) {
-            throw new Error(data.message ?? 'Impossible de charger cette conversation.');
+            throw new Error(
+                data.message ?? 'Impossible de charger cette conversation.',
+            );
         }
 
         activeConversationId.value = data.conversation.id;
@@ -101,7 +105,9 @@ function updateConversation(conversation: Conversation) {
         conversations.value[existing] = conversation;
         conversations.value = [
             conversation,
-            ...conversations.value.filter((item) => item.id !== conversation.id),
+            ...conversations.value.filter(
+                (item) => item.id !== conversation.id,
+            ),
         ];
     }
 }
@@ -186,11 +192,15 @@ async function sendMessage() {
                 :key="conversation.id"
                 type="button"
                 class="conversation-item"
-                :class="{ 'is-active': activeConversationId === conversation.id }"
+                :class="{
+                    'is-active': activeConversationId === conversation.id,
+                }"
                 @click="selectConversation(conversation.id)"
             >
                 <span class="conversation-item-mark">◈</span>
-                <span class="conversation-item-title">{{ conversation.title }}</span>
+                <span class="conversation-item-title">{{
+                    conversation.title
+                }}</span>
             </button>
 
             <p v-if="conversations.length === 0" class="conversation-empty">
@@ -204,7 +214,9 @@ async function sendMessage() {
                     <p class="chat-kicker">TACTICAL CORE // WINSTON</p>
                     <h1>Coach Winston</h1>
                     <p>
-                        Il vous reste {{ remaining }} essai{{ remaining > 1 ? 's' : '' }}
+                        Il vous reste {{ remaining }} essai{{
+                            remaining > 1 ? 's' : ''
+                        }}
                         aujourd'hui.
                     </p>
                 </div>
@@ -213,7 +225,8 @@ async function sendMessage() {
 
             <div ref="messagesElement" class="chat-messages">
                 <p v-if="messages.length === 0" class="chat-empty">
-                    Posez une question à Coach Winston pour commencer une analyse.
+                    Posez une question à Coach Winston pour commencer une
+                    analyse.
                 </p>
                 <div
                     v-for="(item, index) in messages"
@@ -225,7 +238,11 @@ async function sendMessage() {
                             : 'message-assistant'
                     "
                 >
-                    <div v-if="item.role === 'assistant'" class="message-content" v-html="renderMarkdown(item.content)" />
+                    <div
+                        v-if="item.role === 'assistant'"
+                        class="message-content"
+                        v-html="renderMarkdown(item.content)"
+                    />
                     <div v-else class="message-content">{{ item.content }}</div>
                 </div>
                 <p v-if="loading" class="chat-loading">
@@ -237,7 +254,9 @@ async function sendMessage() {
             <form class="chat-composer" @submit.prevent="sendMessage">
                 <textarea
                     v-model="message"
-                    :disabled="loading || loadingConversation || remaining === 0"
+                    :disabled="
+                        loading || loadingConversation || remaining === 0
+                    "
                     placeholder="Votre question..."
                     maxlength="2000"
                     @keydown.enter.exact.prevent="sendMessage"
@@ -260,15 +279,15 @@ async function sendMessage() {
     min-height: 0;
     grid-template-columns: minmax(210px, 260px) minmax(0, 1fr);
     overflow: hidden;
-    background: #091019;
-    color: #eef6f8;
+    background: var(--bg-0);
+    color: var(--text);
 }
 
 .conversation-sidebar {
     min-height: 0;
     overflow: hidden;
-    border-right: 1px solid #a9e8ff1f;
-    background: linear-gradient(180deg, #0d1b27, #091019);
+    border-right: 1px solid var(--surface-line);
+    background: var(--bg-1);
     padding: 22px 14px;
 }
 
@@ -283,7 +302,7 @@ async function sendMessage() {
 .conversation-kicker,
 .chat-kicker {
     margin: 0 0 7px;
-    color: #f06432;
+    color: var(--ow-orange);
     font-size: 0.62rem;
     font-weight: 800;
     letter-spacing: 0.16em;
@@ -292,8 +311,9 @@ async function sendMessage() {
 .conversation-sidebar h2,
 .chat-header h1 {
     margin: 0;
-    font-family: 'Arial Narrow', 'Trebuchet MS', sans-serif;
+    font-family: var(--font-heading);
     letter-spacing: -0.03em;
+    font-style: italic;
 }
 
 .conversation-sidebar h2 {
@@ -305,10 +325,29 @@ async function sendMessage() {
     width: 30px;
     height: 30px;
     place-items: center;
-    border: 1px solid #f0643266;
-    color: #f06432;
+    border: 1px solid color-mix(in srgb, var(--ow-orange) 60%, transparent);
+    background: var(--bg-2);
+    color: var(--ow-orange);
     font-size: 1.35rem;
     line-height: 1;
+    clip-path: polygon(0 0, calc(100% - 7px) 0, 100% 7px, 100% 100%, 0 100%);
+    transition:
+        background-color 150ms cubic-bezier(0.2, 0.8, 0.2, 1),
+        color 150ms cubic-bezier(0.2, 0.8, 0.2, 1),
+        transform 150ms cubic-bezier(0.2, 0.8, 0.2, 1);
+}
+
+.new-conversation-button:hover {
+    background: var(--ow-orange);
+    color: var(--bg-0);
+    transform: translateY(-1px);
+}
+
+.new-conversation-button:focus-visible,
+.conversation-item:focus-visible,
+.chat-composer button:focus-visible {
+    outline: 2px solid var(--ow-orange);
+    outline-offset: 3px;
 }
 
 .conversation-item {
@@ -318,24 +357,29 @@ async function sendMessage() {
     gap: 9px;
     border: 1px solid transparent;
     padding: 10px 9px;
-    color: #a7bec7;
+    background: transparent;
+    color: var(--text-dim);
     text-align: left;
-    transition: border-color 0.2s, background 0.2s, color 0.2s;
+    clip-path: polygon(0 0, calc(100% - 8px) 0, 100% 8px, 100% 100%, 0 100%);
+    transition:
+        border-color 150ms cubic-bezier(0.2, 0.8, 0.2, 1),
+        background-color 150ms cubic-bezier(0.2, 0.8, 0.2, 1),
+        color 150ms cubic-bezier(0.2, 0.8, 0.2, 1);
 }
 
 .conversation-item:hover,
 .conversation-item.is-active {
-    border-color: #a9e8ff2b;
-    background: #a9e8ff0d;
-    color: #eef6f8;
+    border-color: var(--surface-line-strong);
+    background: var(--bg-3);
+    color: var(--text);
 }
 
 .conversation-item.is-active {
-    border-left: 2px solid #f06432;
+    border-left: 2px solid var(--ow-orange);
 }
 
 .conversation-item-mark {
-    color: #f06432;
+    color: var(--ow-orange);
     font-size: 0.8rem;
 }
 
@@ -347,7 +391,7 @@ async function sendMessage() {
 }
 
 .conversation-empty {
-    color: #78909a;
+    color: var(--text-mute);
     font-size: 0.8rem;
     line-height: 1.5;
 }
@@ -372,16 +416,17 @@ async function sendMessage() {
 
 .chat-header h1 {
     font-size: clamp(1.7rem, 3vw, 2.5rem);
+    text-transform: uppercase;
 }
 
 .chat-header p:last-child {
     margin: 5px 0 0;
-    color: #8ca5af;
+    color: var(--text-dim);
     font-size: 0.82rem;
 }
 
 .chat-status {
-    color: #7fd8ae;
+    color: var(--win);
     font-size: 0.68rem;
     font-weight: 800;
     letter-spacing: 0.14em;
@@ -392,9 +437,7 @@ async function sendMessage() {
     width: 7px;
     height: 7px;
     margin-right: 6px;
-    border-radius: 50%;
-    background: #7fd8ae;
-    box-shadow: 0 0 10px #7fd8ae;
+    background: var(--win);
 }
 
 .chat-messages {
@@ -404,14 +447,15 @@ async function sendMessage() {
     flex-direction: column;
     gap: 14px;
     overflow-y: auto;
-    border: 1px solid #a9e8ff1f;
-    background: #050a0e99;
+    border: 1px solid var(--surface-line);
+    background: var(--bg-1);
     padding: clamp(14px, 2vw, 24px);
+    clip-path: polygon(0 0, calc(100% - 12px) 0, 100% 12px, 100% 100%, 0 100%);
 }
 
 .chat-empty,
 .chat-loading {
-    color: #8ca5af;
+    color: var(--text-dim);
     font-size: 0.9rem;
 }
 
@@ -423,14 +467,16 @@ async function sendMessage() {
 
 .message-user {
     align-self: flex-end;
-    border: 1px solid #f0643266;
-    background: #f064321c;
+    border: 1px solid color-mix(in srgb, var(--ow-orange) 42%, transparent);
+    background: color-mix(in srgb, var(--ow-orange) 10%, var(--bg-1));
+    clip-path: polygon(0 0, calc(100% - 10px) 0, 100% 10px, 100% 100%, 0 100%);
 }
 
 .message-assistant {
     align-self: flex-start;
-    border: 1px solid #a9e8ff1f;
-    background: #a9e8ff0b;
+    border: 1px solid var(--surface-line);
+    background: var(--bg-2);
+    clip-path: polygon(0 0, calc(100% - 10px) 0, 100% 10px, 100% 100%, 0 100%);
 }
 
 .message-content {
@@ -450,7 +496,7 @@ async function sendMessage() {
 .message-content :deep(h2),
 .message-content :deep(h3) {
     margin: 0.8rem 0 0.35rem;
-    color: #a9e8ff;
+    color: var(--role-tank);
     font-size: 1rem;
 }
 
@@ -460,20 +506,19 @@ async function sendMessage() {
 }
 
 .message-content :deep(strong) {
-    color: #f7c7a9;
+    color: var(--ow-orange-bright);
 }
 
 .message-content :deep(code) {
-    border-radius: 3px;
-    background: #00000066;
+    background: var(--bg-0);
     padding: 0.1rem 0.3rem;
-    color: #f7c7a9;
+    color: var(--ow-orange-bright);
 }
 
 .chat-error {
     flex: 0 0 auto;
     margin: 10px 0 0;
-    color: #ff9a8b;
+    color: var(--loss);
     font-size: 0.82rem;
 }
 
@@ -489,24 +534,48 @@ async function sendMessage() {
     max-height: 130px;
     flex: 1;
     resize: vertical;
-    border: 1px solid #a9e8ff2b;
-    background: #050a0e;
+    border: 1px solid var(--surface-line-strong);
+    background: var(--bg-1);
     padding: 13px;
-    color: #eef6f8;
+    color: var(--text);
     outline: none;
+    clip-path: polygon(0 0, calc(100% - 10px) 0, 100% 10px, 100% 100%, 0 100%);
 }
 
 .chat-composer textarea:focus {
-    border-color: #f06432;
+    border-color: var(--ow-orange);
+    box-shadow: 0 2px 0 var(--ow-orange);
 }
 
 .chat-composer button {
     align-self: flex-end;
-    border: 1px solid #f06432;
-    background: #f06432;
+    border: 1px solid var(--ow-orange);
+    background: var(--ow-orange);
     padding: 13px 18px;
-    color: #091019;
+    color: var(--bg-0);
+    clip-path: polygon(
+        0 0,
+        calc(100% - 10px) 0,
+        100% 10px,
+        100% 100%,
+        10px 100%,
+        0 calc(100% - 10px)
+    );
+    cursor: pointer;
+    font-family: var(--font-heading);
     font-weight: 800;
+    letter-spacing: 0.08em;
+    text-transform: uppercase;
+    transition:
+        filter 150ms cubic-bezier(0.2, 0.8, 0.2, 1),
+        transform 150ms cubic-bezier(0.2, 0.8, 0.2, 1),
+        box-shadow 150ms cubic-bezier(0.2, 0.8, 0.2, 1);
+}
+
+.chat-composer button:hover:not(:disabled) {
+    box-shadow: 0 0 20px var(--ow-orange-glow);
+    filter: brightness(1.05);
+    transform: translateY(-1px);
 }
 
 .chat-composer button:disabled {
@@ -526,7 +595,7 @@ async function sendMessage() {
         gap: 8px;
         overflow: hidden;
         border-right: 0;
-        border-bottom: 1px solid #a9e8ff1f;
+        border-bottom: 1px solid var(--surface-line);
         padding: 10px;
     }
 
@@ -550,6 +619,19 @@ async function sendMessage() {
 
     .chat-status {
         display: none;
+    }
+}
+
+@media (prefers-reduced-motion: reduce) {
+    .new-conversation-button,
+    .conversation-item,
+    .chat-composer button {
+        transition: none;
+    }
+
+    .new-conversation-button:hover,
+    .chat-composer button:hover {
+        transform: none;
     }
 }
 </style>
