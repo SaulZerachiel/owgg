@@ -25,14 +25,15 @@ class BattlenetController extends Controller
     {
         // Le provider Battle.net expose l'identifiant stable et le BattleTag du joueur.
         $bnet = Socialite::driver('battlenet')->user();
+        $battlenetId = (string) $bnet->getId();
         $battletag = str_replace('#', '-', $bnet->getNickname() ?? 'Joueur Overwatch');
 
         $user = User::updateOrCreate(
-            ['battlenet_id' => $bnet->getId()],
+            ['battlenet_id' => $battlenetId],
             [
                 // Battle.net ne fournit pas forcément d'e-mail : on utilise une adresse interne unique.
                 'name' => $battletag,
-                'email' => $bnet->getEmail() ?? $bnet->getId().'@battlenet.local',
+                'email' => $bnet->getEmail() ?? $battlenetId.'@battlenet.local',
                 'email_verified_at' => now(),
                 'battletag' => $battletag,
             ],
