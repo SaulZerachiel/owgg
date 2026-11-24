@@ -21,8 +21,14 @@ test('a player can view every stored statistics group for their profile', functi
         'battletag' => 'Player-1234',
         'stats_synced_at' => now(),
     ]);
+    Profile::factory()->for($user)->create([
+        'player_id' => 'legacy-battletag-id',
+        'name' => 'Old Player',
+        'created_at' => now()->subDay(),
+        'updated_at' => now()->subDay(),
+    ]);
     $profile = Profile::factory()->for($user)->create([
-        'player_id' => 'Player-1234',
+        'player_id' => 'opaque-profile-id',
         'name' => 'Player',
     ]);
     $role = Role::factory()->create(['role_name' => 'Tank']);
@@ -64,7 +70,7 @@ test('a player can view every stored statistics group for their profile', functi
         ->assertOk()
         ->assertInertia(fn (Assert $page) => $page
             ->component('Statistics/Index')
-            ->where('profile.player_id', 'Player-1234')
+            ->where('profile.player_id', 'opaque-profile-id')
             ->where('ranks.0.role', 'Tank')
             ->where('rolesStats.0.metrics.games_played', 42)
             ->where('allHeroesStats.total_eliminations', 1234)
