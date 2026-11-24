@@ -1,6 +1,7 @@
 <script setup lang="ts">
 import { Head, router } from '@inertiajs/vue3';
 import { computed, onMounted, onUnmounted, ref } from 'vue';
+import HeroSearchInput from '@/components/statistics/HeroSearchInput.vue';
 import MetricGrid from '@/components/statistics/MetricGrid.vue';
 import { formatStatLabel } from '@/lib/formatStatLabel';
 
@@ -50,6 +51,27 @@ const props = defineProps<{
 }>();
 
 const isSyncing = ref(props.syncing);
+const heroSearch = ref('');
+const heroSpecificSearch = ref('');
+const heroNames = computed(() =>
+    [...new Set(props.heroStats.map((hero) => hero.hero))].sort((a, b) =>
+        a.localeCompare(b),
+    ),
+);
+const heroSpecificHeroNames = computed(() =>
+    [...new Set(props.heroSpecificStats.map((stat) => stat.hero))].sort(
+        (a, b) => a.localeCompare(b),
+    ),
+);
+function matchesHero(hero: string, query: string): boolean {
+    return hero.toLocaleLowerCase().includes(query.trim().toLocaleLowerCase());
+}
+
+const filteredHeroStats = computed(() => {
+    return props.heroStats.filter((hero) =>
+        matchesHero(hero.hero, heroSearch.value),
+    );
+});
 const formattedHeroSpecificStats = computed(() =>
     props.heroSpecificStats.map((stat, index) => ({
         ...stat,
@@ -57,6 +79,11 @@ const formattedHeroSpecificStats = computed(() =>
         rowKey: `${stat.hero}-${stat.key}-${index}`,
     })),
 );
+const filteredHeroSpecificStats = computed(() => {
+    return formattedHeroSpecificStats.value.filter((stat) =>
+        matchesHero(stat.hero, heroSpecificSearch.value),
+    );
+});
 const rankColors: Record<string, string> = {
     bronze: 'var(--rank-bronze)',
     silver: 'var(--rank-silver)',
@@ -230,16 +257,44 @@ function rankColor(tier: string | null): string {
 
                 <section class="statistics-section">
                     <div class="section-heading">
-                        <p class="eyebrow">PC COMPETITIVE // ALL HEROES</p>
+                        <p class="eyebrow">PC COMPETITIVE // CAREER TOTAL</p>
                         <h2>All Heroes</h2>
+                        <p class="section-description">
+                            Search for one or more heroes, or leave the search
+                            empty to view your combined career statistics.
+                        </p>
                     </div>
-                    <MetricGrid
-                        v-if="allHeroesStats"
-                        :metrics="allHeroesStats"
-                    />
-                    <p v-else class="empty-copy">
-                        No all-heroes statistics are stored yet.
-                    </p>
+                    <div class="hero-statistics">
+                        <HeroSearchInput
+                            id="hero-stat-search"
+                            v-model="heroSearch"
+                            label="Search by hero"
+                            :heroes="heroNames"
+                        />
+                        <div
+                            v-if="heroSearch.trim() && filteredHeroStats.length"
+                            class="role-grid"
+                        >
+                            <article
+                                v-for="hero in filteredHeroStats"
+                                :key="hero.hero"
+                                class="data-card"
+                            >
+                                <h3>{{ hero.hero }}</h3>
+                                <MetricGrid :metrics="hero.metrics" />
+                            </article>
+                        </div>
+                        <p v-else-if="heroSearch.trim()" class="empty-copy">
+                            No heroes match “{{ heroSearch }}”.
+                        </p>
+                        <MetricGrid
+                            v-else-if="allHeroesStats"
+                            :metrics="allHeroesStats"
+                        />
+                        <p v-else class="empty-copy">
+                            No all-heroes statistics are stored yet.
+                        </p>
+                    </div>
                 </section>
 
                 <section class="statistics-section">
@@ -271,65 +326,58 @@ function rankColor(tier: string | null): string {
 
                 <section class="statistics-section">
                     <div class="section-heading">
-                        <p class="eyebrow">HERO BREAKDOWN</p>
-                        <h2>Heroes</h2>
-                    </div>
-                    <div v-if="heroStats.length" class="stack">
-                        <details
-                            v-for="hero in heroStats"
-                            :key="hero.hero"
-                            class="hero-details"
-                        >
-                            <summary>
-                                <strong>{{ hero.hero }}</strong>
-                                <span>
-                                    {{ hero.metrics.games_played ?? '—' }}
-                                    games
-                                </span>
-                            </summary>
-                            <MetricGrid :metrics="hero.metrics" />
-                        </details>
-                    </div>
-                    <p v-else class="empty-copy">
-                        No hero statistics are stored yet.
-                    </p>
-                </section>
-
-                <section class="statistics-section">
-                    <div class="section-heading">
                         <p class="eyebrow">HERO-SPECIFIC</p>
                         <h2>Additional Statistics</h2>
                     </div>
-                    <div v-if="heroSpecificStats.length" class="table-wrap">
-                        <table>
-                            <thead>
-                                <tr>
-                                    <th>Hero</th>
-                                    <th>Statistic</th>
-                                    <th>Value</th>
-                                </tr>
-                            </thead>
-                            <tbody>
-                                <tr
-                                    v-for="stat in formattedHeroSpecificStats"
-                                    :key="stat.rowKey"
-                                >
-                                    <td>{{ stat.hero }}</td>
-                                    <td>
-                                        <span class="stat-name">
-                                            {{ stat.label }}
-                                        </span>
-                                        <span
-                                            v-if="stat.qualifier"
-                                            class="stat-qualifier"
-                                        >
-                                            {{ stat.qualifier }}
-                                        </span>
-                                    </td>
-                                    <td>{{ stat.value ?? '—' }}</td>
-                                </tr>
-                            </tbody>
-                        </table>
+                    <div
+                        v-if="heroSpecificStats.length"
+                        class="hero-statistics"
+                    >
+                        <HeroSearchInput
+                            id="hero-specific-search"
+                            v-model="heroSpecificSearch"
+                            label="Filter by hero"
+                            :heroes="heroSpecificHeroNames"
+                        />
+                        <div
+                            v-if="filteredHeroSpecificStats.length"
+                            class="table-wrap"
+                        >
+                            <table>
+                                <thead>
+                                    <tr>
+                                        <th>Hero</th>
+                                        <th>Statistic</th>
+                                        <th>Value</th>
+                                    </tr>
+                                </thead>
+                                <tbody>
+                                    <tr
+                                        v-for="stat in filteredHeroSpecificStats"
+                                        :key="stat.rowKey"
+                                    >
+                                        <td>{{ stat.hero }}</td>
+                                        <td>
+                                            <span class="stat-name">
+                                                {{ stat.label }}
+                                            </span>
+                                            <span
+                                                v-if="stat.qualifier"
+                                                class="stat-qualifier"
+                                            >
+                                                {{ stat.qualifier }}
+                                            </span>
+                                        </td>
+                                        <td>{{ stat.value ?? '—' }}</td>
+                                    </tr>
+                                </tbody>
+                            </table>
+                        </div>
+                        <p v-else class="empty-copy">
+                            No hero-specific statistics match “{{
+                                heroSpecificSearch
+                            }}”.
+                        </p>
                     </div>
                     <p v-else class="empty-copy">
                         No hero-specific statistics are stored yet.
@@ -530,6 +578,12 @@ h1 strong {
     text-transform: uppercase;
 }
 
+.section-description {
+    margin: 7px 0 0;
+    color: var(--text-dim);
+    font-size: 0.82rem;
+}
+
 .rank-grid {
     display: grid;
     grid-template-columns: repeat(auto-fit, minmax(150px, 1fr));
@@ -627,6 +681,11 @@ h1 strong {
 .stack {
     display: grid;
     gap: 12px;
+}
+
+.hero-statistics {
+    display: grid;
+    gap: 16px;
 }
 
 .role-grid {
