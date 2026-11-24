@@ -19,6 +19,8 @@ use Laravel\Fortify\TwoFactorAuthenticatable;
  * @property int $id
  * @property string $name
  * @property string $email
+ * @property string $battletag
+ * @property Carbon|null $stats_synced_at
  * @property Carbon|null $email_verified_at
  * @property string $password
  * @property string|null $two_factor_secret
@@ -28,7 +30,7 @@ use Laravel\Fortify\TwoFactorAuthenticatable;
  * @property Carbon|null $created_at
  * @property Carbon|null $updated_at
  */
-#[Fillable(['name', 'email', 'password', 'battlenet_id', 'battletag', 'email_verified_at'])] // Rendre mail nullable
+#[Fillable(['name', 'email', 'password', 'battlenet_id', 'battletag', 'email_verified_at', 'stats_synced_at'])] // Rendre mail nullable
 #[Hidden(['password', 'two_factor_secret', 'two_factor_recovery_codes', 'remember_token'])]
 class User extends Authenticatable implements MustVerifyEmail, PasskeyUser
 {
@@ -44,11 +46,13 @@ class User extends Authenticatable implements MustVerifyEmail, PasskeyUser
     {
         return [
             'email_verified_at' => 'datetime',
+            'stats_synced_at' => 'datetime',
             'password' => 'hashed',
             'two_factor_confirmed_at' => 'datetime',
         ];
     }
 
+    /** @return HasMany<Profile, $this> */
     public function profiles(): HasMany
     {
         return $this->hasMany(Profile::class);

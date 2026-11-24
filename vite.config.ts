@@ -32,6 +32,12 @@ export default defineConfig({
         }),
     ]),
     server: {
+        origin: 'https://owgg.test:5174',
+        port: 5174,
+        strictPort: true,
+        cors: {
+            origin: 'https://owgg.test',
+        },
         watch: {
             ignored: [
                 '**/.agents/**',

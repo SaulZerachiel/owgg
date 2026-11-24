@@ -1,6 +1,13 @@
 <script setup lang="ts">
-import { Link } from '@inertiajs/vue3';
-import { BookOpen, FolderGit2, LayoutGrid, MessageCircle } from '@lucide/vue';
+import { Link, usePage } from '@inertiajs/vue3';
+import {
+    BookOpen,
+    ChartNoAxesCombined,
+    FolderGit2,
+    LayoutGrid,
+    MessageCircle,
+} from '@lucide/vue';
+import { computed } from 'vue';
 import AppLogo from '@/components/AppLogo.vue';
 import NavFooter from '@/components/NavFooter.vue';
 import NavMain from '@/components/NavMain.vue';
@@ -17,18 +24,35 @@ import {
 import { dashboard } from '@/routes';
 import type { NavItem } from '@/types';
 
-const mainNavItems: NavItem[] = [
-    {
-        title: 'Dashboard',
-        href: dashboard(),
-        icon: LayoutGrid,
-    },
-    {
-        title: 'Coach Winston',
-        href: '/chat',
-        icon: MessageCircle,
-    },
-];
+const page = usePage<{
+    auth: { user: { battletag?: string | null } };
+}>();
+
+const mainNavItems = computed<NavItem[]>(() => {
+    const items: NavItem[] = [
+        {
+            title: 'Dashboard',
+            href: dashboard(),
+            icon: LayoutGrid,
+        },
+        {
+            title: 'Coach IA',
+            href: '/chat',
+            icon: MessageCircle,
+        },
+    ];
+    const battleTag = page.props.auth.user.battletag;
+
+    if (battleTag) {
+        items.splice(1, 0, {
+            title: 'Statistics',
+            href: `/${encodeURIComponent(battleTag)}/stats`,
+            icon: ChartNoAxesCombined,
+        });
+    }
+
+    return items;
+});
 
 const footerNavItems: NavItem[] = [
     {
@@ -111,10 +135,15 @@ const footerNavItems: NavItem[] = [
     color: #a7bec7;
     border-radius: 0;
     letter-spacing: 0.04em;
-    transition: background 0.2s, color 0.2s, transform 0.2s;
+    transition:
+        background 0.2s,
+        color 0.2s,
+        transform 0.2s;
 }
 
-:deep(.owgg-sidebar [data-sidebar='sidebar'] [data-sidebar='menu-button']:hover) {
+:deep(
+    .owgg-sidebar [data-sidebar='sidebar'] [data-sidebar='menu-button']:hover
+) {
     background: #18384b;
     color: #eef6f8;
     transform: translateX(3px);
