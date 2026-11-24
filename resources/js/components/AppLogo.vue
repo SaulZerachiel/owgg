@@ -1,6 +1,6 @@
 <template>
-    <div class="owgg-logo-mark">
-        <span>✦</span>
+    <div class="owgg-logo-mark" aria-hidden="true">
+        <span></span>
     </div>
     <div class="owgg-logo-copy">
         <span>OWGG</span>
@@ -11,14 +11,25 @@
 <style scoped>
 .owgg-logo-mark {
     display: grid;
-    width: 32px;
-    height: 32px;
+    width: 34px;
+    height: 34px;
     flex: 0 0 auto;
     place-items: center;
-    border: 1px solid var(--owgg-orange);
-    color: var(--owgg-orange);
-    font-size: 1.15rem;
-    clip-path: polygon(50% 0, 100% 50%, 50% 100%, 0 50%);
+}
+
+.owgg-logo-mark span {
+    position: relative;
+    width: 17px;
+    height: 17px;
+    border: 2px solid var(--ow-orange);
+    transform: rotate(45deg);
+}
+
+.owgg-logo-mark span::after {
+    position: absolute;
+    inset: 3px;
+    background: var(--ow-orange);
+    content: '';
 }
 
 .owgg-logo-copy {
@@ -29,16 +40,17 @@
 }
 
 .owgg-logo-copy span {
-    color: #eef6f8;
-    font-size: 0.9rem;
+    color: var(--text);
+    font-family: var(--font-heading);
+    font-size: 1rem;
     font-weight: 900;
-    letter-spacing: 0.14em;
+    letter-spacing: 0.12em;
 }
 
 .owgg-logo-copy small {
     margin-top: 5px;
-    color: #88a6b2;
+    color: var(--text-dim);
     font-size: 0.46rem;
-    letter-spacing: 0.12em;
+    letter-spacing: 0.16em;
 }
 </style>

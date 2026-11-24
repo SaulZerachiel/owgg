@@ -24,20 +24,20 @@ const user = page.props.auth.user;
 
     <main class="owgg-dashboard">
         <div class="dashboard-grid" aria-hidden="true"></div>
-        <div class="dashboard-glow dashboard-glow-left" aria-hidden="true"></div>
-        <div class="dashboard-glow dashboard-glow-right" aria-hidden="true"></div>
 
         <section class="dashboard-content">
             <header class="dashboard-header">
                 <div>
-                    <p class="dashboard-eyebrow">OVERWATCH // PERFORMANCE LAB</p>
+                    <p class="dashboard-eyebrow">
+                        OVERWATCH // PERFORMANCE LAB
+                    </p>
                     <h1>PLAYER <strong>PROFILE</strong></h1>
                 </div>
                 <span class="dashboard-status"><i></i> SYSTEM ONLINE</span>
             </header>
 
             <section class="profile-panel">
-                <div class="profile-mark">✦</div>
+                <div class="profile-mark" aria-hidden="true"></div>
                 <div>
                     <p class="panel-label">BATTLE.NET ID</p>
                     <h2>{{ user.battletag ?? user.name }}</h2>
@@ -63,12 +63,15 @@ const user = page.props.auth.user;
                 <article class="stat-card stat-card-accent">
                     <p class="panel-label">COACH WINSTON</p>
                     <strong>READY</strong>
-                    <span>Coach Winston est prêt à analyser vos performances</span>
+                    <span
+                        >Coach Winston est prêt à analyser vos
+                        performances</span
+                    >
                 </article>
             </section>
 
             <section class="coming-soon">
-                <div class="coming-soon-icon">◈</div>
+                <div class="coming-soon-icon" aria-hidden="true"></div>
                 <div>
                     <p class="panel-label">DATA LINK // OVERFAST</p>
                     <h2>ANALYSE YOUR GAME.</h2>
@@ -84,49 +87,29 @@ const user = page.props.auth.user;
 
 <style scoped>
 .owgg-dashboard {
-    --orange: #f06432;
-    --blue: #a9e8ff;
+    --orange: var(--ow-orange);
+    --blue: var(--role-tank);
     position: relative;
     height: calc(100dvh - 76px);
     min-height: 0;
     overflow: hidden;
     background:
-        radial-gradient(circle at 78% 25%, #18384b 0, #0d1b27 22%, transparent 52%),
-        linear-gradient(125deg, #091019 0%, #111d29 58%, #0a1119 100%);
-    color: #eef6f8;
-    font-family: 'Arial Narrow', 'Trebuchet MS', sans-serif;
+        radial-gradient(ellipse at 82% 18%, var(--bg-3) 0, transparent 48%),
+        var(--bg-0);
+    color: var(--text);
+    font-family: var(--font-ui);
 }
 
 .dashboard-grid {
     position: absolute;
     inset: 0;
-    opacity: 0.16;
-    background-image:
-        linear-gradient(#8fd9e915 1px, transparent 1px),
-        linear-gradient(90deg, #8fd9e915 1px, transparent 1px);
-    background-size: 46px 46px;
-    transform: perspective(500px) rotateX(55deg) scale(1.5) translateY(28%);
-}
-
-.dashboard-glow {
-    position: absolute;
-    width: 32vw;
-    height: 32vw;
-    border-radius: 999px;
-    filter: blur(80px);
-    opacity: 0.14;
-}
-
-.dashboard-glow-left {
-    top: 20%;
-    left: -20%;
-    background: var(--orange);
-}
-
-.dashboard-glow-right {
-    right: -15%;
-    bottom: -25%;
-    background: var(--blue);
+    opacity: 0.045;
+    background-image: repeating-linear-gradient(
+        135deg,
+        transparent 0 15px,
+        var(--text) 15px 16px
+    );
+    pointer-events: none;
 }
 
 .dashboard-content {
@@ -142,7 +125,7 @@ const user = page.props.auth.user;
 .profile-panel,
 .dashboard-cards,
 .coming-soon {
-    animation: dashboard-enter 0.45s ease-out both;
+    animation: dashboard-enter 320ms cubic-bezier(0.2, 0.8, 0.2, 1) both;
 }
 
 .dashboard-header {
@@ -156,9 +139,10 @@ const user = page.props.auth.user;
 .dashboard-eyebrow,
 .panel-label,
 .dashboard-status {
-    color: #88a6b2;
+    color: var(--text-dim);
     font-size: 0.68rem;
     letter-spacing: 0.18em;
+    text-transform: uppercase;
 }
 
 .dashboard-eyebrow,
@@ -182,16 +166,19 @@ h1 {
     font-weight: 900;
     letter-spacing: -0.06em;
     line-height: 0.9;
+    font-style: italic;
+    text-transform: uppercase;
 }
 
 h1 strong {
-    color: transparent;
-    -webkit-text-stroke: 1px var(--blue);
+    color: var(--ow-orange-bright);
 }
 
 .dashboard-status {
-    color: #7fd8ae;
+    color: var(--win);
     white-space: nowrap;
+    font-family: var(--font-heading);
+    font-weight: 800;
 }
 
 .dashboard-status i {
@@ -199,17 +186,35 @@ h1 strong {
     width: 7px;
     height: 7px;
     margin-right: 7px;
-    border-radius: 50%;
-    background: #7fd8ae;
-    box-shadow: 0 0 10px #7fd8ae;
+    background: var(--win);
 }
 
 .profile-panel,
 .stat-card,
 .coming-soon {
-    border: 1px solid #a9e8ff2b;
-    background: #09151f99;
-    box-shadow: 0 0 30px #07101866;
+    position: relative;
+    border: 1px solid var(--surface-line-strong);
+    background: var(--bg-2);
+    clip-path: polygon(
+        0 0,
+        calc(100% - 18px) 0,
+        100% 18px,
+        100% 100%,
+        18px 100%,
+        0 calc(100% - 18px)
+    );
+}
+
+.profile-panel::before,
+.stat-card::before,
+.coming-soon::before {
+    position: absolute;
+    top: 0;
+    left: 0;
+    width: 3px;
+    height: 32px;
+    background: var(--ow-orange);
+    content: '';
 }
 
 .profile-panel {
@@ -217,23 +222,16 @@ h1 strong {
     align-items: center;
     gap: 22px;
     padding: clamp(18px, 2.5vh, 26px) 30px;
-    border-left: 3px solid var(--orange);
+    border-left: 0;
 }
 
 .profile-mark {
-    display: grid;
-    width: 58px;
-    height: 58px;
+    width: 42px;
+    height: 42px;
     flex: 0 0 auto;
-    place-items: center;
-    border: 1px solid var(--orange);
-    color: var(--orange);
-    font-size: 2rem;
-    transform: rotate(45deg);
-}
-
-.profile-mark::first-letter {
-    transform: rotate(-45deg);
+    border: 2px solid var(--ow-orange);
+    clip-path: polygon(50% 0, 100% 50%, 50% 100%, 0 50%);
+    background: color-mix(in srgb, var(--ow-orange) 18%, transparent);
 }
 
 .profile-panel h2,
@@ -241,17 +239,21 @@ h1 strong {
     margin-bottom: 8px;
     font-size: clamp(1.4rem, 3vw, 2.2rem);
     letter-spacing: 0.04em;
+    font-style: italic;
+    text-transform: uppercase;
 }
 
 .panel-label {
     color: var(--orange);
+    font-family: var(--font-heading);
+    font-weight: 800;
 }
 
 .panel-copy,
 .coming-soon p,
 .stat-card span {
     margin-bottom: 0;
-    color: #a7bec7;
+    color: var(--text-dim);
     font-size: 0.9rem;
     line-height: 1.5;
 }
@@ -259,10 +261,13 @@ h1 strong {
 .connected-badge {
     margin-left: auto;
     padding: 7px 10px;
-    color: #7fd8ae;
-    border: 1px solid #7fd8ae66;
+    color: var(--win);
+    border: 1px solid color-mix(in srgb, var(--win) 42%, transparent);
     font-size: 0.62rem;
     letter-spacing: 0.12em;
+    font-family: var(--font-heading);
+    font-weight: 800;
+    clip-path: polygon(0 0, calc(100% - 7px) 0, 100% 7px, 100% 100%, 0 100%);
 }
 
 .dashboard-cards {
@@ -275,22 +280,32 @@ h1 strong {
 .stat-card {
     min-height: 130px;
     padding: 22px;
+    transition:
+        border-color 150ms cubic-bezier(0.2, 0.8, 0.2, 1),
+        transform 150ms cubic-bezier(0.2, 0.8, 0.2, 1);
+}
+
+.stat-card:hover {
+    border-color: color-mix(in srgb, var(--ow-orange) 65%, transparent);
+    transform: translateY(-2px);
 }
 
 .stat-card strong {
     display: block;
     margin: 12px 0 8px;
-    color: var(--blue);
+    color: var(--text);
     font-size: 2rem;
     letter-spacing: 0.06em;
+    font-variant-numeric: tabular-nums;
+    font-family: var(--font-heading);
 }
 
 .stat-card-accent {
-    border-color: #f0643266;
+    border-color: color-mix(in srgb, var(--ow-orange) 48%, transparent);
 }
 
 .stat-card-accent strong {
-    color: var(--orange);
+    color: var(--ow-orange-bright);
     font-size: 1.35rem;
 }
 
@@ -302,8 +317,13 @@ h1 strong {
 }
 
 .coming-soon-icon {
+    width: 42px;
+    height: 42px;
+    flex: 0 0 auto;
+    border: 2px solid var(--orange);
+    background: color-mix(in srgb, var(--orange) 12%, transparent);
+    clip-path: polygon(50% 0, 100% 50%, 50% 100%, 0 50%);
     color: var(--orange);
-    font-size: 2.4rem;
 }
 
 @keyframes dashboard-enter {
@@ -343,6 +363,23 @@ h1 strong {
 
     .dashboard-cards {
         grid-template-columns: 1fr;
+    }
+}
+
+@media (prefers-reduced-motion: reduce) {
+    .dashboard-header,
+    .profile-panel,
+    .dashboard-cards,
+    .coming-soon {
+        animation: none;
+    }
+
+    .stat-card {
+        transition: none;
+    }
+
+    .stat-card:hover {
+        transform: none;
     }
 }
 </style>

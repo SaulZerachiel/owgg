@@ -15,27 +15,35 @@ import { Head } from '@inertiajs/vue3';
                     Des offres simples pour analyser vos performances et
                     progresser plus intelligemment.
                 </p>
-                <span class="simulation-note">SIMULATION // NO PAYMENT REQUIRED</span>
+                <span class="simulation-note"
+                    >SIMULATION // NO PAYMENT REQUIRED</span
+                >
             </header>
 
             <section class="pricing-cards">
                 <article class="pricing-card">
                     <p class="card-kicker">RECRUIT</p>
                     <h2>FREE</h2>
-                    <p class="card-description">Pour découvrir le centre de performance.</p>
+                    <p class="card-description">
+                        Pour découvrir le centre de performance.
+                    </p>
                     <ul>
                         <li>Profil Battle.net</li>
                         <li>Statistiques Overfast</li>
                         <li>10 analyses de Coach Winston / jour</li>
                     </ul>
-                    <button class="pricing-button secondary">CURRENT PLAN</button>
+                    <button class="pricing-button secondary">
+                        CURRENT PLAN
+                    </button>
                 </article>
 
                 <article class="pricing-card featured">
                     <span class="featured-label">RECOMMENDED</span>
                     <p class="card-kicker">TACTICIAN</p>
                     <h2>9<span>€</span><small>/ MONTH</small></h2>
-                    <p class="card-description">Pour transformer chaque partie en expérience.</p>
+                    <p class="card-description">
+                        Pour transformer chaque partie en expérience.
+                    </p>
                     <ul>
                         <li>Analyses avancées de Coach Winston</li>
                         <li>Historique de matchs étendu</li>
@@ -47,13 +55,17 @@ import { Head } from '@inertiajs/vue3';
                 <article class="pricing-card">
                     <p class="card-kicker">COMMANDER</p>
                     <h2>19<span>€</span><small>/ MONTH</small></h2>
-                    <p class="card-description">Pour les joueurs qui veulent aller plus loin.</p>
+                    <p class="card-description">
+                        Pour les joueurs qui veulent aller plus loin.
+                    </p>
                     <ul>
                         <li>Analyses sans limite</li>
                         <li>Rapports de progression</li>
                         <li>Priorité à Coach Winston</li>
                     </ul>
-                    <button class="pricing-button secondary">COMING SOON</button>
+                    <button class="pricing-button secondary">
+                        COMING SOON
+                    </button>
                 </article>
             </section>
 
@@ -67,27 +79,27 @@ import { Head } from '@inertiajs/vue3';
 
 <style scoped>
 .owgg-pricing {
-    --orange: #f06432;
-    --blue: #a9e8ff;
+    --orange: var(--ow-orange);
+    --blue: var(--role-tank);
     position: relative;
     min-height: calc(100dvh - 76px);
     overflow: hidden;
     background:
-        radial-gradient(circle at 50% 20%, #18384b 0, #0d1b27 24%, transparent 58%),
-        linear-gradient(125deg, #091019 0%, #111d29 58%, #0a1119 100%);
-    color: #eef6f8;
-    font-family: 'Arial Narrow', 'Trebuchet MS', sans-serif;
+        radial-gradient(ellipse at 50% 5%, var(--bg-3) 0, transparent 48%),
+        var(--bg-0);
+    color: var(--text);
 }
 
 .pricing-grid {
     position: absolute;
     inset: 0;
-    opacity: 0.14;
-    background-image:
-        linear-gradient(#8fd9e915 1px, transparent 1px),
-        linear-gradient(90deg, #8fd9e915 1px, transparent 1px);
-    background-size: 46px 46px;
-    transform: perspective(500px) rotateX(55deg) scale(1.5) translateY(28%);
+    opacity: 0.04;
+    background-image: repeating-linear-gradient(
+        135deg,
+        transparent 0 15px,
+        var(--text) 15px 16px
+    );
+    pointer-events: none;
 }
 
 .pricing-content {
@@ -115,6 +127,7 @@ import { Head } from '@inertiajs/vue3';
 
 .eyebrow {
     margin-bottom: 14px;
+    font-weight: 800;
 }
 
 h1 {
@@ -123,21 +136,22 @@ h1 {
     font-weight: 900;
     letter-spacing: -0.07em;
     line-height: 0.9;
+    font-style: italic;
+    text-transform: uppercase;
 }
 
 h1 strong {
-    color: transparent;
-    -webkit-text-stroke: 1px var(--blue);
+    color: var(--orange);
 }
 
 .pricing-heading > p:not(.eyebrow) {
     margin: 22px auto 14px;
-    color: #a7bec7;
+    color: var(--text-dim);
     font-size: 0.95rem;
 }
 
 .simulation-note {
-    color: #7fd8ae;
+    color: var(--win);
     font-size: 0.58rem;
 }
 
@@ -153,14 +167,33 @@ h1 strong {
     min-height: 350px;
     flex-direction: column;
     padding: 28px;
-    border: 1px solid #a9e8ff2b;
-    background: #09151fcc;
-    box-shadow: 0 0 30px #07101866;
+    border: 1px solid var(--surface-line-strong);
+    background: var(--bg-2);
+    clip-path: polygon(
+        0 0,
+        calc(100% - 18px) 0,
+        100% 18px,
+        100% 100%,
+        18px 100%,
+        0 calc(100% - 18px)
+    );
+    transition:
+        border-color 150ms cubic-bezier(0.2, 0.8, 0.2, 1),
+        transform 150ms cubic-bezier(0.2, 0.8, 0.2, 1);
+}
+
+.pricing-card:hover {
+    border-color: color-mix(in srgb, var(--ow-orange) 48%, transparent);
+    transform: translateY(-4px);
 }
 
 .pricing-card.featured {
     border-color: var(--orange);
-    box-shadow: 0 0 28px #f0643230;
+    background: linear-gradient(
+        145deg,
+        color-mix(in srgb, var(--ow-orange) 8%, var(--bg-2)),
+        var(--bg-2)
+    );
     transform: translateY(-10px);
 }
 
@@ -170,10 +203,11 @@ h1 strong {
     right: 18px;
     padding: 7px 10px;
     background: var(--orange);
-    color: #17171a;
+    color: var(--bg-0);
     font-size: 0.56rem;
     font-weight: 900;
     letter-spacing: 0.12em;
+    clip-path: polygon(0 0, calc(100% - 7px) 0, 100% 7px, 100% 100%, 0 100%);
 }
 
 .card-kicker {
@@ -182,9 +216,11 @@ h1 strong {
 
 .pricing-card h2 {
     margin: 0;
-    color: var(--blue);
+    color: var(--text);
     font-size: 3.2rem;
     letter-spacing: -0.04em;
+    font-variant-numeric: tabular-nums;
+    font-style: italic;
 }
 
 .featured h2 {
@@ -196,7 +232,7 @@ h1 strong {
 }
 
 .pricing-card h2 small {
-    color: #88a6b2;
+    color: var(--text-dim);
     font-size: 0.58rem;
     letter-spacing: 0.12em;
 }
@@ -204,7 +240,7 @@ h1 strong {
 .card-description {
     min-height: 44px;
     margin: 12px 0 20px;
-    color: #a7bec7;
+    color: var(--text-dim);
     font-size: 0.86rem;
     line-height: 1.5;
 }
@@ -214,7 +250,7 @@ ul {
     gap: 11px;
     margin: 0 0 24px;
     padding: 0;
-    color: #d7e5e8;
+    color: var(--text);
     font-size: 0.78rem;
     list-style: none;
 }
@@ -222,7 +258,7 @@ ul {
 li::before {
     margin-right: 9px;
     color: var(--orange);
-    content: '◆';
+    content: '▸';
     font-size: 0.5rem;
 }
 
@@ -230,25 +266,50 @@ li::before {
     width: 100%;
     margin-top: auto;
     padding: 12px;
-    border: 1px solid #a9e8ff55;
+    border: 1px solid var(--surface-line-strong);
     background: transparent;
-    color: var(--blue);
+    color: var(--text-dim);
     font-size: 0.64rem;
     font-weight: 900;
     letter-spacing: 0.14em;
+    font-family: var(--font-heading);
+    clip-path: polygon(
+        0 0,
+        calc(100% - 9px) 0,
+        100% 9px,
+        100% 100%,
+        9px 100%,
+        0 calc(100% - 9px)
+    );
+    transition:
+        background-color 150ms cubic-bezier(0.2, 0.8, 0.2, 1),
+        border-color 150ms cubic-bezier(0.2, 0.8, 0.2, 1),
+        color 150ms cubic-bezier(0.2, 0.8, 0.2, 1),
+        transform 150ms cubic-bezier(0.2, 0.8, 0.2, 1);
 }
 
 .pricing-button.primary {
     border-color: var(--orange);
     background: var(--orange);
-    color: #17171a;
+    color: var(--bg-0);
+}
+
+.pricing-button:hover {
+    border-color: var(--orange);
+    color: var(--orange);
+    transform: translateY(-1px);
+}
+
+.pricing-button.primary:hover {
+    color: var(--bg-0);
+    box-shadow: 0 0 20px var(--ow-orange-glow);
 }
 
 .pricing-footer {
     display: flex;
     justify-content: space-between;
     margin-top: 30px;
-    color: #88a6b2;
+    color: var(--text-dim);
     font-size: 0.58rem;
 }
 
@@ -257,9 +318,7 @@ li::before {
     width: 6px;
     height: 6px;
     margin-right: 6px;
-    border-radius: 50%;
-    background: #7fd8ae;
-    box-shadow: 0 0 8px #7fd8ae;
+    background: var(--win);
 }
 
 @media (max-width: 800px) {
@@ -271,9 +330,20 @@ li::before {
         transform: none;
     }
 
+    .pricing-card:hover {
+        transform: none;
+    }
+
     .pricing-footer {
         gap: 12px;
         flex-direction: column;
+    }
+}
+
+@media (prefers-reduced-motion: reduce) {
+    .pricing-card,
+    .pricing-button {
+        transition: none;
     }
 }
 </style>
