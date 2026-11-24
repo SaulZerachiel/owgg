@@ -17,18 +17,37 @@ class OverfastService
     public function playerByBattleTag(string $battleTag): array
     {
         $player = $this->getObject('/players/'.rawurlencode($battleTag));
+        $summary = $player['summary'] ?? null;
 
-        if (! is_string($player['player_id'] ?? null)) {
+        if (! is_array($summary) || ! is_string($summary['username'] ?? null)) {
             throw new UnexpectedValueException('OverFast returned an invalid player profile.');
         }
 
-        if (($player['is_public'] ?? null) !== true) {
+        if (! array_key_exists('stats', $player)) {
+            throw new UnexpectedValueException('OverFast returned an invalid player profile.');
+        }
+
+        if ($player['stats'] === null) {
             throw new OverfastProfileNotFoundException(
-                "The OverFast profile for [{$battleTag}] is not public.",
+                "The OverFast profile for [{$battleTag}] is private or has no statistics.",
             );
         }
 
-        return $player;
+        if (! is_array($player['stats'])) {
+            throw new UnexpectedValueException('OverFast returned an invalid player profile.');
+        }
+
+        return [
+            'player_id' => $battleTag,
+            'name' => $summary['username'],
+            'avatar' => $summary['avatar'] ?? null,
+            'namecard' => $summary['namecard'] ?? null,
+            'title' => $summary['title'] ?? null,
+            'career_url' => rtrim(config('services.overfast.base_url'), '/').'/players/'.rawurlencode($battleTag),
+            'blizzard_id' => null,
+            'last_updated_at' => $summary['last_updated_at'] ?? null,
+            'is_public' => true,
+        ];
     }
 
     /**
