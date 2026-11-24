@@ -74,7 +74,10 @@ const navItems = computed<NavItem[]>(() => {
                         <span class="sr-only">Ouvrir le menu</span>
                     </Button>
                 </SheetTrigger>
-                <SheetContent side="left" class="owgg-mobile-menu w-[300px] p-6">
+                <SheetContent
+                    side="left"
+                    class="owgg-mobile-menu w-[300px] p-6"
+                >
                     <SheetHeader>
                         <SheetTitle class="sr-only">Navigation OWGG</SheetTitle>
                         <AppLogo />
@@ -112,7 +115,9 @@ const navItems = computed<NavItem[]>(() => {
             <DropdownMenu>
                 <DropdownMenuTrigger as-child>
                     <Button class="owgg-profile-trigger" variant="ghost">
-                        <Avatar class="owgg-profile-avatar size-8 overflow-hidden rounded-full">
+                        <Avatar
+                            class="owgg-profile-avatar size-8 overflow-hidden rounded-full"
+                        >
                             <AvatarImage
                                 v-if="auth.user.avatar"
                                 :src="auth.user.avatar"
@@ -133,10 +138,7 @@ const navItems = computed<NavItem[]>(() => {
             </DropdownMenu>
         </div>
 
-        <div
-            v-if="props.breadcrumbs.length > 1"
-            class="owgg-breadcrumbs"
-        >
+        <div v-if="props.breadcrumbs.length > 1" class="owgg-breadcrumbs">
             <Breadcrumbs :breadcrumbs="breadcrumbs" />
         </div>
     </header>
@@ -146,9 +148,9 @@ const navItems = computed<NavItem[]>(() => {
 .owgg-header {
     position: relative;
     z-index: 20;
-    border-bottom: 1px solid #a9e8ff1f;
-    background:
-        linear-gradient(90deg, #0d1b27 0%, #0a1119 72%, #112c3b 100%);
+    border-bottom: 1px solid
+        color-mix(in srgb, var(--owgg-cyan) 12%, transparent);
+    background: linear-gradient(90deg, #0d1b27 0%, #0a1119 72%, #112c3b 100%);
     color: #eef6f8;
     font-family: 'Arial Narrow', 'Trebuchet MS', sans-serif;
 }
@@ -197,7 +199,9 @@ const navItems = computed<NavItem[]>(() => {
     letter-spacing: 0.11em;
     text-decoration: none;
     text-transform: uppercase;
-    transition: color 0.2s, background 0.2s;
+    transition:
+        color 0.2s,
+        background 0.2s;
 }
 
 .owgg-nav-link {
@@ -212,7 +216,7 @@ const navItems = computed<NavItem[]>(() => {
 }
 
 .owgg-nav-link.is-active {
-    background: #f0643218;
+    background: color-mix(in srgb, var(--owgg-orange) 10%, transparent);
 }
 
 .owgg-nav-link.is-active::after {
@@ -221,8 +225,8 @@ const navItems = computed<NavItem[]>(() => {
     bottom: 0;
     left: 12px;
     height: 3px;
-    background: #f06432;
-    box-shadow: 0 0 12px #f06432;
+    background: var(--owgg-orange);
+    box-shadow: 0 0 12px var(--owgg-orange);
     content: '';
 }
 
@@ -251,12 +255,14 @@ const navItems = computed<NavItem[]>(() => {
 }
 
 .owgg-profile-avatar {
-    border: 1px solid #f06432;
-    box-shadow: 0 0 0 3px #f064321c, 0 0 14px #f0643238;
+    border: 1px solid var(--owgg-orange);
+    box-shadow:
+        0 0 0 3px color-mix(in srgb, var(--owgg-orange) 12%, transparent),
+        0 0 14px color-mix(in srgb, var(--owgg-orange) 22%, transparent);
 }
 
 .owgg-avatar-fallback {
-    background: #f06432;
+    background: var(--owgg-orange);
     color: #17171a;
     font-weight: 900;
 }
@@ -279,8 +285,8 @@ const navItems = computed<NavItem[]>(() => {
 }
 
 .owgg-mobile-link.is-active {
-    border-left-color: #f06432;
-    background: #f0643218;
+    border-left-color: var(--owgg-orange);
+    background: color-mix(in srgb, var(--owgg-orange) 10%, transparent);
 }
 
 .owgg-breadcrumbs {

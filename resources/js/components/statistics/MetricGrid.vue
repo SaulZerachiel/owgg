@@ -1,5 +1,6 @@
 <script setup lang="ts">
 import { computed } from 'vue';
+import { formatStatLabel } from '@/lib/formatStatLabel';
 
 type MetricValue = number | string | boolean | null;
 
@@ -8,13 +9,17 @@ const props = defineProps<{
 }>();
 
 const rows = computed(() =>
-    Object.entries(props.metrics).map(([key, value]) => ({
-        key,
-        label: key
-            .replaceAll('_', ' ')
-            .replace(/\b\w/g, (letter) => letter.toUpperCase()),
-        value: formatValue(key, value),
-    })),
+    Object.entries(props.metrics).map(([key, value]) => {
+        const statLabel = formatStatLabel(key);
+
+        return {
+            key,
+            label: [statLabel.label, statLabel.qualifier]
+                .filter(Boolean)
+                .join(' · '),
+            value: formatValue(key, value),
+        };
+    }),
 );
 
 function formatValue(key: string, value: MetricValue): string {
@@ -51,18 +56,89 @@ function formatValue(key: string, value: MetricValue): string {
 </script>
 
 <template>
-    <dl class="grid grid-cols-2 gap-3 sm:grid-cols-3 lg:grid-cols-4">
-        <div
-            v-for="row in rows"
-            :key="row.key"
-            class="min-w-0 border border-[#a9e8ff1f] bg-[#0a1119]/70 px-4 py-3"
-        >
-            <dt class="text-xs tracking-[0.12em] text-[#88a6b2] uppercase">
+    <dl class="metric-grid">
+        <div v-for="row in rows" :key="row.key" class="metric-card">
+            <dt>
                 {{ row.label }}
             </dt>
-            <dd class="mt-2 text-base font-semibold break-words text-[#a9e8ff]">
+            <dd>
                 {{ row.value }}
             </dd>
         </div>
     </dl>
 </template>
+
+<style scoped>
+.metric-grid {
+    display: grid;
+    grid-template-columns: repeat(2, minmax(0, 1fr));
+    gap: 10px;
+}
+
+.metric-card {
+    position: relative;
+    min-width: 0;
+    padding: 14px 14px 13px 16px;
+    border: 1px solid #a9e8ff24;
+    background: linear-gradient(145deg, #132433c9, #09131dcc);
+    transition:
+        border-color 0.2s ease,
+        transform 0.2s ease,
+        background-color 0.2s ease;
+}
+
+.metric-card::before {
+    position: absolute;
+    top: 0;
+    bottom: 0;
+    left: 0;
+    width: 2px;
+    background: #f06432;
+    content: '';
+    opacity: 0.75;
+}
+
+.metric-card:hover {
+    transform: translateY(-2px);
+    border-color: #a9e8ff66;
+}
+
+.metric-card dt {
+    color: #9ab2bd;
+    font-size: 0.63rem;
+    font-weight: 700;
+    letter-spacing: 0.1em;
+    line-height: 1.4;
+    text-transform: uppercase;
+}
+
+.metric-card dd {
+    margin: 8px 0 0;
+    color: #d7f4ff;
+    font-size: clamp(0.9rem, 2vw, 1.1rem);
+    font-weight: 800;
+    overflow-wrap: anywhere;
+}
+
+@media (min-width: 640px) {
+    .metric-grid {
+        grid-template-columns: repeat(3, minmax(0, 1fr));
+    }
+}
+
+@media (min-width: 1100px) {
+    .metric-grid {
+        grid-template-columns: repeat(4, minmax(0, 1fr));
+    }
+}
+
+@media (prefers-reduced-motion: reduce) {
+    .metric-card {
+        transition: none;
+    }
+
+    .metric-card:hover {
+        transform: none;
+    }
+}
+</style>

@@ -1,7 +1,8 @@
 <script setup lang="ts">
 import { Head, router } from '@inertiajs/vue3';
-import { onMounted, onUnmounted, ref } from 'vue';
+import { computed, onMounted, onUnmounted, ref } from 'vue';
 import MetricGrid from '@/components/statistics/MetricGrid.vue';
+import { formatStatLabel } from '@/lib/formatStatLabel';
 
 type MetricValue = number | string | boolean | null;
 type MetricMap = Record<string, MetricValue>;
@@ -49,6 +50,13 @@ const props = defineProps<{
 }>();
 
 const isSyncing = ref(props.syncing);
+const formattedHeroSpecificStats = computed(() =>
+    props.heroSpecificStats.map((stat, index) => ({
+        ...stat,
+        ...formatStatLabel(stat.key),
+        rowKey: `${stat.hero}-${stat.key}-${index}`,
+    })),
+);
 let refreshTimer: ReturnType<typeof setInterval> | undefined;
 
 onMounted(() => {
@@ -175,6 +183,7 @@ function updatedAt(value: string | null): string {
                             v-for="rank in ranks"
                             :key="`${rank.role}-${rank.season}`"
                             class="rank-card"
+                            :class="`rank-card--${rank.role.toLowerCase()}`"
                         >
                             <p>{{ rank.role }}</p>
                             <strong>
@@ -208,7 +217,7 @@ function updatedAt(value: string | null): string {
                         <p class="eyebrow">ROLE BREAKDOWN</p>
                         <h2>Roles</h2>
                     </div>
-                    <div v-if="rolesStats.length" class="stack">
+                    <div v-if="rolesStats.length" class="role-grid">
                         <article
                             v-for="role in rolesStats"
                             :key="role.role"
@@ -265,11 +274,21 @@ function updatedAt(value: string | null): string {
                             </thead>
                             <tbody>
                                 <tr
-                                    v-for="(stat, index) in heroSpecificStats"
-                                    :key="`${stat.hero}-${stat.key}-${index}`"
+                                    v-for="stat in formattedHeroSpecificStats"
+                                    :key="stat.rowKey"
                                 >
                                     <td>{{ stat.hero }}</td>
-                                    <td>{{ stat.key }}</td>
+                                    <td>
+                                        <span class="stat-name">
+                                            {{ stat.label }}
+                                        </span>
+                                        <span
+                                            v-if="stat.qualifier"
+                                            class="stat-qualifier"
+                                        >
+                                            {{ stat.qualifier }}
+                                        </span>
+                                    </td>
                                     <td>{{ stat.value ?? '—' }}</td>
                                 </tr>
                             </tbody>
@@ -286,8 +305,8 @@ function updatedAt(value: string | null): string {
 
 <style scoped>
 .statistics-page {
-    --orange: #f06432;
-    --blue: #a9e8ff;
+    --orange: var(--owgg-orange);
+    --blue: var(--owgg-cyan);
     position: relative;
     min-height: calc(100vh - 65px);
     overflow: hidden;
@@ -344,7 +363,7 @@ function updatedAt(value: string | null): string {
     align-items: flex-end;
     justify-content: space-between;
     gap: 24px;
-    margin-bottom: 28px;
+    margin-bottom: 30px;
 }
 
 .eyebrow {
@@ -397,9 +416,9 @@ h1 strong {
 .rank-card,
 .hero-details,
 .table-wrap {
-    border: 1px solid #a9e8ff2b;
-    background: #09151fdd;
-    box-shadow: 0 0 30px #07101866;
+    border: 1px solid #a9e8ff30;
+    background: linear-gradient(140deg, #10202ddd 0%, #09131dee 75%), #09151f;
+    box-shadow: 0 16px 38px #050b1266;
 }
 
 .profile-banner {
@@ -408,13 +427,17 @@ h1 strong {
     gap: 18px;
     padding: 22px 26px;
     border-left: 3px solid var(--orange);
+    background:
+        radial-gradient(circle at 90% 50%, #1a3b4e55, transparent 38%),
+        linear-gradient(120deg, #132737 0%, #09131d 75%);
 }
 
 .avatar {
     width: 64px;
     height: 64px;
     flex: 0 0 auto;
-    border: 1px solid #a9e8ff66;
+    border: 1px solid #a9e8ff80;
+    box-shadow: 0 0 24px #a9e8ff1c;
     object-fit: cover;
 }
 
@@ -441,14 +464,19 @@ h1 strong {
 }
 
 .section-heading {
+    display: block;
     margin-bottom: 18px;
+    padding-bottom: 13px;
+    border-bottom: 1px solid #a9e8ff20;
 }
 
 .section-heading h2,
 .empty-state h2 {
     margin-bottom: 0;
-    font-size: 1.45rem;
-    letter-spacing: 0.03em;
+    color: #eef6f8;
+    font-size: clamp(1.25rem, 2.5vw, 1.55rem);
+    font-weight: 850;
+    letter-spacing: 0.02em;
 }
 
 .rank-grid {
@@ -458,7 +486,38 @@ h1 strong {
 }
 
 .rank-card {
+    position: relative;
+    overflow: hidden;
     padding: 16px;
+    background:
+        radial-gradient(circle at 100% 0, #a9e8ff0d, transparent 55%),
+        linear-gradient(145deg, #132433, #09131d);
+    transition:
+        transform 0.2s ease,
+        border-color 0.2s ease;
+}
+
+.rank-card::before {
+    position: absolute;
+    top: 0;
+    bottom: 0;
+    left: 0;
+    width: 3px;
+    background: var(--blue);
+    content: '';
+}
+
+.rank-card--damage::before {
+    background: var(--orange);
+}
+
+.rank-card--support::before {
+    background: #b7a3ff;
+}
+
+.rank-card:hover {
+    transform: translateY(-2px);
+    border-color: #a9e8ff70;
 }
 
 .rank-card p {
@@ -474,6 +533,14 @@ h1 strong {
     text-transform: capitalize;
 }
 
+.rank-card--damage strong {
+    color: #ff9a70;
+}
+
+.rank-card--support strong {
+    color: #c4b5ff;
+}
+
 .rank-card small {
     display: block;
     margin-top: 8px;
@@ -485,24 +552,38 @@ h1 strong {
     gap: 12px;
 }
 
+.role-grid {
+    display: grid;
+    grid-template-columns: repeat(auto-fit, minmax(min(100%, 370px), 1fr));
+    gap: 12px;
+}
+
 .data-card,
 .hero-details {
     padding: 16px;
 }
 
 .data-card h3 {
-    margin-bottom: 14px;
+    margin-bottom: 16px;
     color: var(--blue);
     font-size: 1.1rem;
+    font-weight: 800;
+    text-transform: capitalize;
 }
 
 .hero-details summary {
     display: flex;
+    min-height: 34px;
     cursor: pointer;
     align-items: center;
     justify-content: space-between;
     gap: 16px;
     color: var(--blue);
+}
+
+.hero-details summary:focus-visible {
+    outline: 2px solid var(--orange);
+    outline-offset: 4px;
 }
 
 .hero-details summary span {
@@ -526,8 +607,8 @@ table {
 
 th,
 td {
-    padding: 12px 14px;
-    border-bottom: 1px solid #a9e8ff1f;
+    padding: 13px 15px;
+    border-bottom: 1px solid #a9e8ff20;
 }
 
 th {
@@ -539,6 +620,39 @@ th {
 
 td {
     color: #d3e2e7;
+}
+
+tbody tr {
+    transition: background-color 0.18s ease;
+}
+
+tbody tr:hover {
+    background: #a9e8ff0a;
+}
+
+td:last-child {
+    color: #d7f4ff;
+    font-weight: 800;
+    white-space: nowrap;
+}
+
+.stat-name {
+    font-weight: 650;
+}
+
+.stat-qualifier {
+    display: inline-flex;
+    margin-left: 8px;
+    padding: 3px 7px;
+    border: 1px solid #f0643252;
+    background: #f0643212;
+    color: #ff9a70;
+    font-size: 0.62rem;
+    font-weight: 800;
+    letter-spacing: 0.08em;
+    line-height: 1.2;
+    text-transform: uppercase;
+    vertical-align: middle;
 }
 
 tbody tr:last-child td {
@@ -554,6 +668,11 @@ tbody tr:last-child td {
     margin-bottom: 10px;
 }
 
+.empty-state > p:last-child {
+    max-width: 62ch;
+    line-height: 1.65;
+}
+
 @keyframes statistics-enter {
     from {
         opacity: 0;
@@ -562,6 +681,21 @@ tbody tr:last-child td {
     to {
         opacity: 1;
         transform: translateY(0);
+    }
+}
+
+@media (prefers-reduced-motion: reduce) {
+    .statistics-header,
+    .profile-banner,
+    .statistics-section,
+    .empty-state,
+    .rank-card {
+        animation: none;
+        transition: none;
+    }
+
+    .rank-card:hover {
+        transform: none;
     }
 }
 
@@ -580,6 +714,25 @@ tbody tr:last-child td {
     .statistics-section,
     .empty-state {
         padding: 16px;
+    }
+
+    .profile-banner {
+        align-items: flex-start;
+        padding: 17px;
+    }
+
+    .avatar {
+        width: 54px;
+        height: 54px;
+    }
+
+    th,
+    td {
+        padding: 11px 12px;
+    }
+
+    .stat-qualifier {
+        margin: 5px 0 0;
     }
 }
 </style>
