@@ -21,11 +21,11 @@ import { dashboard, login, register } from '@/routes';
 
         <section class="owgg-content">
             <div class="owgg-copy">
-                <p class="owgg-eyebrow">OVERWATCH 2 // PERFORMANCE LAB</p>
+                <p class="owgg-eyebrow">OVERWATCH // PERFORMANCE LAB</p>
                 <h1>PLAY<br /><strong>SMARTER.</strong></h1>
                 <p class="owgg-description">
                     Analysez vos parties, comprenez vos statistiques et
-                    progressez avec votre coach personnalisé.
+                    progressez avec Coach Winston.
                 </p>
 
                 <div class="owgg-actions">

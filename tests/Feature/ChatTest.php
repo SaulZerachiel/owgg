@@ -19,8 +19,22 @@ test('authenticated users can use the fake coach and see their remaining quota',
 
     $response->assertOk()
         ->assertJsonPath('remaining', 9)
-        ->assertJsonStructure(['answer', 'remaining', 'usage']);
+        ->assertJsonStructure([
+            'answer',
+            'remaining',
+            'usage',
+            'conversation' => ['id', 'title'],
+        ])
+        ->assertJsonPath('conversation.title', 'Comment améliorer ma visée ?');
     expect(AiCall::where('user_id', $user->id)->count())->toBe(1);
+
+    $conversationId = $response->json('conversation.id');
+    $this->actingAs($user)
+        ->getJson(route('chat.conversations.show', $conversationId))
+        ->assertOk()
+        ->assertJsonPath('messages.0.role', 'user')
+        ->assertJsonPath('messages.0.content', 'Comment améliorer ma visée ?')
+        ->assertJsonPath('messages.1.role', 'assistant');
 });
 
 test('the coach refuses requests after the daily quota', function () {

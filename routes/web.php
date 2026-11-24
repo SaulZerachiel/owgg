@@ -11,7 +11,11 @@ Route::middleware(['auth', 'verified'])->group(function () {
     Route::inertia('dashboard', 'Dashboard')->name('dashboard');
     Route::get('{playerId}/stats', [StatisticsController::class, 'show'])->name('statistics.show');
     Route::get('chat', [ChatController::class, 'page'])->name('chat');
+    Route::get('chat/conversations/{conversation}', [ChatController::class, 'conversation'])
+        ->name('chat.conversations.show');
     Route::post('chat/message', [ChatController::class, 'message'])->name('chat.message');
+    Route::inertia('pricing', 'Pricing')->name('pricing');
+    Route::inertia('about-us', 'About')->name('about');
 });
 
 Route::get('/auth/battlenet', [BattlenetController::class, 'redirect'])->name('battlenet.redirect');

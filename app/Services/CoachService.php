@@ -16,9 +16,14 @@ final class CoachService
 
     /**
      * @param  array<int, array{role: string, content: string}>  $history
-     * @return array{answer: string, remaining: int, usage: array<string, int|float|string>}
+     * @return array{answer: string, title: string|null, remaining: int, usage: array<string, int|float|string>}
      */
-    public function answer(User $user, string $message, array $history = []): array
+    public function answer(
+        User $user,
+        string $message,
+        array $history = [],
+        bool $generateTitle = false,
+    ): array
     {
         $quota = (int) config('services.openrouter.daily_quota', 10);
         $remaining = $this->remaining($user);
@@ -34,8 +39,12 @@ final class CoachService
             [
                 // Ce message définit le rôle et la langue attendue pour toutes les conversations.
                 'role' => 'system',
-                'content' => 'Tu es un coach Overwatch 2 utile, concis et bienveillant. Réponds en français.',
+                'content' => (string) config('winston.system_prompt'),
             ],
+            ...($generateTitle ? [[
+                'role' => 'system',
+                'content' => 'Pour cette première réponse, commence par une ligne exactement au format [[TITLE: titre court]], avec 3 à 6 mots décrivant le sujet. N’utilise ni Markdown ni point final dans le titre. Écris ensuite ta réponse normalement sur la ligne suivante.',
+            ]] : []),
             // On limite l'historique pour maîtriser la taille et le coût de la requête.
             ...array_slice($history, -10),
             ['role' => 'user', 'content' => $message],
@@ -56,9 +65,14 @@ final class CoachService
         }
 
         $this->record($user, $result);
+        [$title, $answer] = $this->extractTitle($result->content);
+        if ($generateTitle && $title === null) {
+            $title = $this->fallbackTitle($message);
+        }
 
         return [
-            'answer' => $result->content,
+            'answer' => $answer,
+            'title' => $title,
             'remaining' => $remaining - 1,
             'usage' => [
                 'model' => $result->model,
@@ -68,6 +82,28 @@ final class CoachService
                 'duration_ms' => $result->durationMs,
             ],
         ];
+    }
+
+    /**
+     * @return array{0: string|null, 1: string}
+     */
+    private function extractTitle(string $content): array
+    {
+        if (preg_match('/^\s*\[\[TITLE:\s*(.{3,120}?)\]\]\s*(?:\r?\n)+/i', $content, $matches) !== 1) {
+            return [null, $content];
+        }
+
+        $title = trim((string) preg_replace('/\s+/', ' ', $matches[1]));
+        $answer = ltrim(substr($content, strlen($matches[0])));
+
+        return [$title !== '' ? $title : null, $answer];
+    }
+
+    private function fallbackTitle(string $message): string
+    {
+        $title = trim((string) preg_replace('/\s+/', ' ', $message));
+
+        return mb_substr($title, 0, 60);
     }
 
     public function remaining(User $user): int
