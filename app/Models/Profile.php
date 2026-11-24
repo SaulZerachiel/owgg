@@ -42,6 +42,7 @@ class Profile extends Model
         ];
     }
 
+    /** @return BelongsTo<User, $this> */
     public function user(): BelongsTo
     {
         return $this->belongsTo(User::class);
@@ -75,5 +76,11 @@ class Profile extends Model
     public function heroSpecificStats(): HasMany
     {
         return $this->hasMany(HeroSpecificStat::class, 'player_id', 'player_id');
+    }
+
+    /** @return HasMany<PlayerStatSnapshot, $this> */
+    public function statSnapshots(): HasMany
+    {
+        return $this->hasMany(PlayerStatSnapshot::class, 'player_id', 'player_id');
     }
 }

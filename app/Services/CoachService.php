@@ -5,6 +5,7 @@ namespace App\Services;
 use App\Ai\AiClient;
 use App\Ai\AiResult;
 use App\Ai\AiUnavailableException;
+use App\Ai\CoachHarness;
 use App\Models\AiCall;
 use App\Models\User;
 use Illuminate\Support\Carbon;
@@ -12,7 +13,10 @@ use Illuminate\Validation\ValidationException;
 
 final class CoachService
 {
-    public function __construct(private readonly AiClient $client) {}
+    public function __construct(
+        private readonly AiClient $client,
+        private readonly CoachHarness $harness,
+    ) {}
 
     /**
      * @param  array<int, array{role: string, content: string}>  $history
@@ -23,8 +27,7 @@ final class CoachService
         string $message,
         array $history = [],
         bool $generateTitle = false,
-    ): array
-    {
+    ): array {
         $quota = (int) config('services.openrouter.daily_quota', 10);
         $remaining = $this->remaining($user);
 
@@ -35,20 +38,7 @@ final class CoachService
             ]);
         }
 
-        $messages = [
-            [
-                // Ce message définit le rôle et la langue attendue pour toutes les conversations.
-                'role' => 'system',
-                'content' => (string) config('winston.system_prompt'),
-            ],
-            ...($generateTitle ? [[
-                'role' => 'system',
-                'content' => 'Pour cette première réponse, commence par une ligne exactement au format [[TITLE: titre court]], avec 3 à 6 mots décrivant le sujet. N’utilise ni Markdown ni point final dans le titre. Écris ensuite ta réponse normalement sur la ligne suivante.',
-            ]] : []),
-            // On limite l'historique pour maîtriser la taille et le coût de la requête.
-            ...array_slice($history, -10),
-            ['role' => 'user', 'content' => $message],
-        ];
+        $messages = $this->harness->messages($user, $message, $history, $generateTitle);
 
         try {
             $result = $this->client->chat($messages);
