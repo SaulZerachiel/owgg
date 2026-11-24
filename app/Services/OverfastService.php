@@ -16,31 +16,19 @@ class OverfastService
      */
     public function playerByBattleTag(string $battleTag): array
     {
-        $searchResult = $this->getObject('/players', ['name' => $battleTag]);
+        $player = $this->getObject('/players/'.rawurlencode($battleTag));
 
-        if (! is_array($searchResult['results'] ?? null)) {
-            throw new UnexpectedValueException('OverFast returned an invalid player search result.');
+        if (! is_string($player['player_id'] ?? null)) {
+            throw new UnexpectedValueException('OverFast returned an invalid player profile.');
         }
 
-        foreach ($searchResult['results'] as $player) {
-            if (! is_array($player)
-                || ! is_string($player['player_id'] ?? null)
-                || strcasecmp($player['player_id'], $battleTag) !== 0) {
-                continue;
-            }
-
-            if (($player['is_public'] ?? null) !== true) {
-                throw new OverfastProfileNotFoundException(
-                    "The OverFast profile for [{$battleTag}] is not public.",
-                );
-            }
-
-            return $this->stringKeyedArray($player);
+        if (($player['is_public'] ?? null) !== true) {
+            throw new OverfastProfileNotFoundException(
+                "The OverFast profile for [{$battleTag}] is not public.",
+            );
         }
 
-        throw new OverfastProfileNotFoundException(
-            "No public OverFast profile was found for [{$battleTag}].",
-        );
+        return $player;
     }
 
     /**

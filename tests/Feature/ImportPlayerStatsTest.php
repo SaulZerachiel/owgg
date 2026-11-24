@@ -19,33 +19,31 @@ use Inertia\Testing\AssertableInertia as Assert;
 
 uses(RefreshDatabase::class);
 
-test('player search imports and updates all statistics without duplicating them', function () {
+test('BattleTag lookup imports and updates all statistics without duplicating them', function () {
     $user = User::factory()->create(['battletag' => 'Player-1234']);
-    $searchRequests = 0;
+    $profileRequests = 0;
+    $overfastPlayerId = 'opaque-profile-id';
 
-    Http::fake(function (Request $request) use (&$searchRequests) {
+    Http::fake(function (Request $request) use (&$profileRequests, $overfastPlayerId) {
         $path = parse_url($request->url(), PHP_URL_PATH);
 
-        if ($path === '/players') {
-            $searchRequests++;
+        if ($path === '/players/Player-1234') {
+            $profileRequests++;
 
             return Http::response([
-                'total' => 1,
-                'results' => [[
-                    'player_id' => 'Player-1234',
-                    'name' => $searchRequests === 1 ? 'Player' : 'Updated Player',
-                    'avatar' => 'https://example.test/avatar.png',
-                    'namecard' => 'https://example.test/namecard.png',
-                    'title' => 'Data Broker',
-                    'career_url' => 'https://overfast-api.tekrop.fr/players/Player-1234',
-                    'blizzard_id' => 'c65b8798bc61d6ffbba120%7Ccfe9dd77a4382165e2b920bdcc035949',
-                    'last_updated_at' => 1777998881,
-                    'is_public' => true,
-                ]],
+                'player_id' => $overfastPlayerId,
+                'name' => $profileRequests === 1 ? 'Player' : 'Updated Player',
+                'avatar' => 'https://example.test/avatar.png',
+                'namecard' => 'https://example.test/namecard.png',
+                'title' => 'Data Broker',
+                'career_url' => "https://overfast-api.tekrop.fr/players/{$overfastPlayerId}",
+                'blizzard_id' => 'c65b8798bc61d6ffbba120%7Ccfe9dd77a4382165e2b920bdcc035949',
+                'last_updated_at' => 1777998881,
+                'is_public' => true,
             ]);
         }
 
-        if ($path === '/players/Player-1234/summary') {
+        if ($path === "/players/{$overfastPlayerId}/summary") {
             return Http::response([
                 'competitive' => [
                     'pc' => [
@@ -60,7 +58,7 @@ test('player search imports and updates all statistics without duplicating them'
             ]);
         }
 
-        if ($path === '/players/Player-1234/stats/summary') {
+        if ($path === "/players/{$overfastPlayerId}/stats/summary") {
             return Http::response([
                 'general' => [
                     'games_played' => 42,
@@ -135,7 +133,7 @@ test('player search imports and updates all statistics without duplicating them'
             ]);
         }
 
-        if ($path === '/players/Player-1234/stats/career') {
+        if ($path === "/players/{$overfastPlayerId}/stats/career") {
             return Http::response([
                 'all-heroes' => [
                     'game' => [
@@ -188,11 +186,11 @@ test('player search imports and updates all statistics without duplicating them'
     $heroStats = HeroStats::query()->sole();
     $heroSpecificStat = HeroSpecificStat::query()->sole();
 
-    expect($profile->player_id)->toBe('Player-1234')
+    expect($profile->player_id)->toBe($overfastPlayerId)
         ->and($profile->user_id)->toBe($user->id)
         ->and($profile->name)->toBe('Updated Player')
         ->and($profile->avatar)->toBe('https://example.test/avatar.png')
-        ->and($profile->career_url)->toBe('https://overfast-api.tekrop.fr/players/Player-1234')
+        ->and($profile->career_url)->toBe("https://overfast-api.tekrop.fr/players/{$overfastPlayerId}")
         ->and($profile->blizzard_id)->toBe('c65b8798bc61d6ffbba120%7Ccfe9dd77a4382165e2b920bdcc035949')
         ->and($profile->is_public)->toBeTrue()
         ->and($rank->tier)->toBe('diamond')
@@ -224,34 +222,33 @@ test('player search imports and updates all statistics without duplicating them'
     expect($overfastRequests)->toBe(12);
 });
 
-test('a missing or private player raises a clear exception', function () {
-    Http::fake([
-        '*players*' => Http::response([
-            'total' => 0,
-            'results' => [],
-        ]),
-    ]);
+test('a missing player raises a clear exception', function () {
+    Http::fake(function (Request $request) {
+        if (parse_url($request->url(), PHP_URL_PATH) === '/players/Player-1234') {
+            return Http::response([], 404);
+        }
+
+        return Http::response([], 404);
+    });
 
     expect(fn () => app(OverfastService::class)->playerByBattleTag('Player-1234'))
-        ->toThrow(OverfastProfileNotFoundException::class, 'No public OverFast profile was found');
+        ->toThrow(OverfastProfileNotFoundException::class, 'OverFast has no public statistics for this player');
 });
 
-test('player search matches the BattleTag without case sensitivity', function () {
+test('BattleTag lookup returns the opaque OverFast player ID', function () {
     Http::fake(function (Request $request) {
-        if (parse_url($request->url(), PHP_URL_PATH) === '/players') {
+        if (parse_url($request->url(), PHP_URL_PATH) === '/players/Player-1234') {
             return Http::response([
-                'total' => 1,
-                'results' => [[
-                    'player_id' => 'zerachiel-21444',
-                    'is_public' => true,
-                ]],
+                'player_id' => 'opaque-profile-id',
+                'name' => 'Player',
+                'is_public' => true,
             ]);
         }
 
         return Http::response([], 404);
     });
 
-    $player = app(OverfastService::class)->playerByBattleTag('Zerachiel-21444');
+    $player = app(OverfastService::class)->playerByBattleTag('Player-1234');
 
-    expect($player['player_id'])->toBe('zerachiel-21444');
+    expect($player['player_id'])->toBe('opaque-profile-id');
 });

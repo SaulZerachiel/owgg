@@ -15,11 +15,13 @@ class Profile extends Model
     use HasFactory;
 
     protected $primaryKey = 'player_id';
+
     public $incrementing = false;
+
     protected $keyType = 'string';
 
     protected $fillable = [
-        'player_id', // PK, Format: TeKrop-2217, Identifier of the player : BattleTag (with "#" replaced by "-").
+        'player_id', // Primary key returned by OverFast; may be an opaque identifier.
         'user_id', // FK to user model (one-to-one relation)
         'name',
         'avatar',

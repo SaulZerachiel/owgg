@@ -27,8 +27,8 @@ class StatisticsController extends Controller
         abort_unless($user instanceof User && $user->battletag === $playerId, 404);
 
         $loadProfile = fn () => Profile::query()
-            ->where('player_id', $playerId)
             ->where('user_id', $user->id)
+            ->orderByDesc('updated_at')
             ->with([
                 'allHeroesStats',
                 'ranks.role',
