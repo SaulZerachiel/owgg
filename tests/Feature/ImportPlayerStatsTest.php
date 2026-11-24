@@ -5,6 +5,7 @@ use App\Models\AllHeroesStats;
 use App\Models\Hero;
 use App\Models\HeroSpecificStat;
 use App\Models\HeroStats;
+use App\Models\PlayerStatSnapshot;
 use App\Models\Profile;
 use App\Models\Rank;
 use App\Models\RolesStats;
@@ -200,7 +201,8 @@ test('BattleTag lookup imports and updates all statistics without duplicating th
         ->and($heroSpecificStat->stat_key)->toBe('biotic_grenade_kills')
         ->and($profile->last_updated_at->equalTo(Carbon::createFromTimestampUTC(1777998881)))->toBeTrue()
         ->and($user->fresh()->stats_synced_at)->not->toBeNull()
-        ->and(Hero::query()->whereKey('ana')->exists())->toBeTrue();
+        ->and(Hero::query()->whereKey('ana')->exists())->toBeTrue()
+        ->and(PlayerStatSnapshot::query()->count())->toBe(1);
 
     $freshUser = $user->fresh();
 

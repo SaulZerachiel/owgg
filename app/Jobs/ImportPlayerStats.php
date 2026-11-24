@@ -12,6 +12,7 @@ use App\Models\Role;
 use App\Models\RolesStats;
 use App\Models\User;
 use App\Services\OverfastService;
+use App\Services\PlayerStatsSnapshotService;
 use Carbon\Carbon;
 use Illuminate\Bus\Queueable;
 use Illuminate\Contracts\Queue\ShouldBeUnique;
@@ -46,7 +47,7 @@ class ImportPlayerStats implements ShouldBeUnique, ShouldQueue
         return (string) $this->user->getKey();
     }
 
-    public function handle(OverfastService $overfast): void
+    public function handle(OverfastService $overfast, PlayerStatsSnapshotService $snapshots): void
     {
         $player = $overfast->playerByBattleTag($this->user->battletag);
         $playerId = $player['player_id'];
@@ -61,7 +62,7 @@ class ImportPlayerStats implements ShouldBeUnique, ShouldQueue
         $heroRows = $this->heroRows($heroes, $roleIds);
         $heroIds = array_column($heroRows, 'hero_id');
 
-        DB::transaction(function () use ($playerId, $player, $summary, $statsSummary, $careerStats, $roleRows, $heroRows, $roleIds, $heroIds): void {
+        DB::transaction(function () use ($playerId, $player, $summary, $statsSummary, $careerStats, $roleRows, $heroRows, $roleIds, $heroIds, $snapshots): void {
             Role::upsert($roleRows, ['role_id'], ['role_name', 'role_icon', 'updated_at']);
             Hero::upsert($heroRows, ['hero_id'], ['role_id', 'hero_name', 'updated_at']);
 
@@ -121,6 +122,7 @@ class ImportPlayerStats implements ShouldBeUnique, ShouldQueue
             );
 
             $this->user->forceFill(['stats_synced_at' => now()])->save();
+            $snapshots->capture(Profile::query()->whereKey($playerId)->firstOrFail());
         });
     }
 

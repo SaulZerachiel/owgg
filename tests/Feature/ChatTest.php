@@ -1,6 +1,9 @@
 <?php
 
+use App\Ai\AiClient;
+use App\Ai\AiResult;
 use App\Models\AiCall;
+use App\Models\Profile;
 use App\Models\User;
 
 test('guests cannot use the coach', function () {
@@ -35,6 +38,62 @@ test('authenticated users can use the fake coach and see their remaining quota',
         ->assertJsonPath('messages.0.role', 'user')
         ->assertJsonPath('messages.0.content', 'Comment améliorer ma visée ?')
         ->assertJsonPath('messages.1.role', 'assistant');
+});
+
+test('the coach receives only the authenticated player snapshots and coaching skills', function () {
+    $user = User::factory()->create(['battletag' => 'Player-1234']);
+    $profile = Profile::factory()->for($user)->create(['player_id' => 'Player-1234']);
+    $profile->statSnapshots()->create([
+        'fingerprint' => str_repeat('a', 64),
+        'snapshot' => ['all_heroes' => ['games_played' => 100]],
+        'captured_at' => now()->subDay(),
+    ]);
+    $profile->statSnapshots()->create([
+        'fingerprint' => str_repeat('b', 64),
+        'snapshot' => [
+            'all_heroes' => ['games_played' => 123],
+            'heroes' => [['hero' => 'Ana', 'metrics' => ['win_percentage' => 60]]],
+        ],
+        'captured_at' => now(),
+    ]);
+
+    $otherUser = User::factory()->create(['battletag' => 'Other-5678']);
+    $otherProfile = Profile::factory()->for($otherUser)->create(['player_id' => 'Other-5678']);
+    $otherProfile->statSnapshots()->create([
+        'fingerprint' => str_repeat('c', 64),
+        'snapshot' => ['all_heroes' => ['games_played' => 987]],
+        'captured_at' => now(),
+    ]);
+
+    $client = new class implements AiClient
+    {
+        /** @var array<int, array{role: string, content: string}> */
+        public array $messages = [];
+
+        public function chat(array $messages): AiResult
+        {
+            $this->messages = $messages;
+
+            return new AiResult('Analyse reçue.', 10, 10, 0, 1, 'fake');
+        }
+    };
+    $this->app->instance(AiClient::class, $client);
+
+    $this->actingAs($user)->postJson(route('chat.message'), [
+        'message' => 'Analyse ma progression sur Ana.',
+    ])->assertOk();
+
+    $systemContext = collect($client->messages)
+        ->where('role', 'system')
+        ->pluck('content')
+        ->implode("\n");
+
+    expect($systemContext)
+        ->toContain('"games_played":123')
+        ->toContain('"games_played":100')
+        ->toContain('snapshot précédent')
+        ->toContain('Pour analyser un héros')
+        ->not->toContain('"games_played":987');
 });
 
 test('the coach refuses requests after the daily quota', function () {
