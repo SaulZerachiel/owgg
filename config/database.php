@@ -1,5 +1,6 @@
 <?php
 
+use Illuminate\Support\ConfigurationUrlParser;
 use Illuminate\Support\Str;
 use Pdo\Mysql;
 
@@ -88,7 +89,7 @@ return [
             'driver' => 'pgsql',
             'url' => env('DATABASE_URL', env('DB_URL')),
             'pooled' => ! empty(env('DATABASE_URL_UNPOOLED')),
-            'direct' => array_filter([
+            'direct' => (new ConfigurationUrlParser)->parseConfiguration([
                 'url' => env('DATABASE_URL_UNPOOLED'),
             ]),
             'host' => env('DB_HOST', '127.0.0.1'),
