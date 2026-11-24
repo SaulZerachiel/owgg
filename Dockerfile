@@ -55,6 +55,7 @@ ENV APP_DEBUG=false
 ENV PORT=10000
 ENV DB_CONNECTION=pgsql
 ENV QUEUE_CONNECTION=database
+ENV DB_QUEUE_CONNECTION=pgsql::direct
 ENV DB_QUEUE_RETRY_AFTER=330
 
 COPY --from=vendor /app/vendor ./vendor
