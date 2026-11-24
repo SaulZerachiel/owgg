@@ -235,3 +235,23 @@ test('a missing or private player raises a clear exception', function () {
     expect(fn () => app(OverfastService::class)->playerByBattleTag('Player-1234'))
         ->toThrow(OverfastProfileNotFoundException::class, 'No public OverFast profile was found');
 });
+
+test('player search matches the BattleTag without case sensitivity', function () {
+    Http::fake(function (Request $request) {
+        if (parse_url($request->url(), PHP_URL_PATH) === '/players') {
+            return Http::response([
+                'total' => 1,
+                'results' => [[
+                    'player_id' => 'zerachiel-21444',
+                    'is_public' => true,
+                ]],
+            ]);
+        }
+
+        return Http::response([], 404);
+    });
+
+    $player = app(OverfastService::class)->playerByBattleTag('Zerachiel-21444');
+
+    expect($player['player_id'])->toBe('zerachiel-21444');
+});

@@ -23,7 +23,9 @@ class OverfastService
         }
 
         foreach ($searchResult['results'] as $player) {
-            if (! is_array($player) || ($player['player_id'] ?? null) !== $battleTag) {
+            if (! is_array($player)
+                || ! is_string($player['player_id'] ?? null)
+                || strcasecmp($player['player_id'], $battleTag) !== 0) {
                 continue;
             }
 
