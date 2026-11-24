@@ -32,6 +32,8 @@ class ImportPlayerStats implements ShouldBeUnique, ShouldQueue
 
     public int $tries = 3;
 
+    public int $timeout = 300;
+
     public int $uniqueFor = 3600;
 
     /** @var array<int, int> */

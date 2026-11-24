@@ -14,7 +14,7 @@ return new class extends Migration
     public function up(): void
     {
         Schema::create('profiles', function (Blueprint $table) {
-            $table->string('player_id')->primary();
+            $table->id();
             $table->timestamps();
         });
     }
