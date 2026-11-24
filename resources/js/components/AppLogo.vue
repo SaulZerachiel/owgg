@@ -1,7 +1,5 @@
 <template>
-    <div
-        class="owgg-logo-mark"
-    >
+    <div class="owgg-logo-mark">
         <span>✦</span>
     </div>
     <div class="owgg-logo-copy">
@@ -17,8 +15,8 @@
     height: 32px;
     flex: 0 0 auto;
     place-items: center;
-    border: 1px solid #f06432;
-    color: #f06432;
+    border: 1px solid var(--owgg-orange);
+    color: var(--owgg-orange);
     font-size: 1.15rem;
     clip-path: polygon(50% 0, 100% 50%, 50% 100%, 0 50%);
 }
