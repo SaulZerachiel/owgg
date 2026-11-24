@@ -87,7 +87,7 @@ return [
         'pgsql' => [
             'driver' => 'pgsql',
             'url' => env('DATABASE_URL', env('DB_URL')),
-            'pooled' => true,
+            'pooled' => ! empty(env('DATABASE_URL_UNPOOLED')),
             'direct' => array_filter([
                 'url' => env('DATABASE_URL_UNPOOLED'),
             ]),

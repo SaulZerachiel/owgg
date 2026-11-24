@@ -2,9 +2,11 @@
 
 use App\Jobs\ImportPlayerStats;
 use App\Models\User;
+use Illuminate\Database\Events\QueryExecuted;
 use Illuminate\Foundation\Testing\RefreshDatabase;
-use Illuminate\Support\Facades\Queue;
+use Illuminate\Support\Facades\DB;
 use Illuminate\Support\Facades\Http;
+use Illuminate\Support\Facades\Queue;
 use Laravel\Socialite\Facades\Socialite;
 
 uses(RefreshDatabase::class);
@@ -12,8 +14,15 @@ uses(RefreshDatabase::class);
 test('Battle.net login stores the OverFast-formatted BattleTag', function () {
     Queue::fake();
 
+    $battlenetIdBindings = null;
+    DB::listen(function (QueryExecuted $query) use (&$battlenetIdBindings): void {
+        if ($battlenetIdBindings === null && str_contains($query->sql, 'battlenet_id')) {
+            $battlenetIdBindings = $query->bindings;
+        }
+    });
+
     $battlenetUser = Mockery::mock();
-    $battlenetUser->shouldReceive('getId')->twice()->andReturn('battlenet-user-id');
+    $battlenetUser->shouldReceive('getId')->once()->andReturn(451640254);
     $battlenetUser->shouldReceive('getNickname')->once()->andReturn('Player#1234');
     $battlenetUser->shouldReceive('getEmail')->once()->andReturnNull();
 
@@ -27,7 +36,8 @@ test('Battle.net login stores the OverFast-formatted BattleTag', function () {
 
     $this->get(route('battlenet.callback'))->assertRedirect(route('dashboard'));
 
-    expect(User::query()->sole()->battletag)->toBe('Player-1234');
+    expect(User::query()->sole()->battletag)->toBe('Player-1234')
+        ->and($battlenetIdBindings)->toBe(['451640254']);
     Queue::assertPushed(ImportPlayerStats::class, 1);
 });
 
@@ -40,7 +50,7 @@ test('Battle.net login skips an import synced within the last hour', function ()
     ]);
 
     $battlenetUser = Mockery::mock();
-    $battlenetUser->shouldReceive('getId')->twice()->andReturn('battlenet-user-id');
+    $battlenetUser->shouldReceive('getId')->once()->andReturn('battlenet-user-id');
     $battlenetUser->shouldReceive('getNickname')->once()->andReturn('Player#1234');
     $battlenetUser->shouldReceive('getEmail')->once()->andReturnNull();
 
@@ -68,7 +78,7 @@ test('a private OverFast profile shows an error toast after Battle.net login', f
     ]);
 
     $battlenetUser = Mockery::mock();
-    $battlenetUser->shouldReceive('getId')->twice()->andReturn('battlenet-user-id');
+    $battlenetUser->shouldReceive('getId')->once()->andReturn('battlenet-user-id');
     $battlenetUser->shouldReceive('getNickname')->once()->andReturn('Player#1234');
     $battlenetUser->shouldReceive('getEmail')->once()->andReturnNull();
 
