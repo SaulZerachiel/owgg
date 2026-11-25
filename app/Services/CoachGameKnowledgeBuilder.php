@@ -128,7 +128,7 @@ final class CoachGameKnowledgeBuilder
             .'Les Perks standard et les pouvoirs Stadium sont deux systèmes distincts. '
             .'Les fiches donnent les capacités et Perks actuels, pas toutes les interactions cachées : '
             .'distingue les faits de fiche de tes déductions tactiques, et signale les interactions dépendantes du patch. '
-            .'Les conseils Counterwatch sont des pistes tactiques OWGG, pas des statistiques de victoire ni un classement universel; '
+            .'Les scores de matchup Counterwatch proviennent d’une base initiale OWGG : ce sont des indications éditoriales, pas des statistiques de duel ni des certitudes; '
             .'les affinités de carte reposent sur la géométrie des lieux et restent subjectives. '
             .'Conserve les noms Brawl, Dive et Poke : ne traduis pas Dive par « plongée » ou « plongeur », '
             .'et n’ajoute pas « Rush » après Brawl. '

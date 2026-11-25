@@ -17,7 +17,7 @@ type RoleFilter = 'all' | HeroRole;
 type CounterPick = {
     key: string;
     name: string;
-    reason: string;
+    score: number;
     winrate: number | null;
     winrateDifference: number | null;
 };
@@ -574,12 +574,15 @@ function changeMap(event: Event): void {
                             </p>
                             <h2 id="counter-title">COMMENT LE CONTESTER</h2>
                         </div>
-                        <span class="section-tag">3 OPTIONS PAR RÔLE</span>
+                        <span class="section-tag"
+                            >BASE INITIALE · SCORE /2</span
+                        >
                     </div>
                     <p class="counter-intro">
-                        Ces choix indiquent des leviers de jeu, pas un
-                        classement universel. Garde le héros qui répond au
-                        problème concret et que tu sais jouer.
+                        Les matchups héros-à-héros sont classés par score (+2
+                        fort, +1 léger); le winrate par carte départage les
+                        scores égaux. Cette base initiale donne des pistes, pas
+                        des duels garantis.
                     </p>
                     <p class="counter-stats-note">
                         Le winrate compare la performance globale de chaque
@@ -625,7 +628,9 @@ function changeMap(event: Event): void {
                                     >
                                     <div>
                                         <strong>{{ pick.name }}</strong>
-                                        <p>{{ pick.reason }}</p>
+                                        <p class="counter-matchup-score">
+                                            Matchup OWGG : +{{ pick.score }}/2
+                                        </p>
                                         <p
                                             v-if="pick.winrate !== null"
                                             class="counter-pick-stats"
@@ -656,8 +661,8 @@ function changeMap(event: Event): void {
                                 </li>
                             </ol>
                             <p v-else class="counter-empty">
-                                Les options de ce rôle ne sont pas disponibles
-                                dans le roster reçu.
+                                Aucun matchup héros-à-héros n’est enregistré
+                                pour ce rôle dans la base initiale.
                             </p>
                         </article>
                     </div>
@@ -1408,6 +1413,11 @@ input:focus-visible {
     margin-top: 5px;
     color: var(--ow-orange);
     font-size: 0.67rem;
+    font-weight: 700;
+}
+
+.counter-pick .counter-matchup-score {
+    color: var(--ow-orange);
     font-weight: 700;
 }
 
