@@ -59,6 +59,24 @@ final class CoachGameKnowledgeBuilder
                 && is_string($hero['name'] ?? null)
                 && $this->mentionsHero($query, $hero['name'], $hero['key']),
         ));
+        $mapDataUnavailable = false;
+        $maps = [];
+
+        if ($matchedHeroes !== []) {
+            try {
+                $maps = Cache::remember(
+                    'counterwatch:maps:v2',
+                    now()->addHours(self::CACHE_TTL_HOURS),
+                    fn (): array => $this->overfast->maps(),
+                );
+            } catch (ConnectionException|RequestException|UnexpectedValueException $exception) {
+                report($exception);
+                Log::warning('Current OverFast map data is unavailable to the coach.');
+                $mapDataUnavailable = true;
+            }
+        }
+
+        $matchups = $matchedHeroes !== [] ? $this->counterwatch->matchups() : [];
         $knowledge = [];
         $unavailableHeroes = [];
 
@@ -97,7 +115,12 @@ final class CoachGameKnowledgeBuilder
             $knowledge[] = [
                 'fetched_at' => $heroData['fetched_at'],
                 ...$this->relevantDetails($heroData['data']),
-                'counterwatch_guide' => $this->counterwatch->heroGuide($hero, $catalog['heroes']),
+                'counterwatch_guide' => $this->counterwatch->heroGuide(
+                    $hero,
+                    $catalog['heroes'],
+                    $maps,
+                    $matchups,
+                ),
             ];
         }
 
@@ -106,11 +129,16 @@ final class CoachGameKnowledgeBuilder
             .'Les fiches donnent les capacités et Perks actuels, pas toutes les interactions cachées : '
             .'distingue les faits de fiche de tes déductions tactiques, et signale les interactions dépendantes du patch. '
             .'Les conseils Counterwatch sont des pistes tactiques OWGG, pas des statistiques de victoire ni un classement universel; '
-            ."nuance-les selon la carte, les compositions, les perks et l’exécution.\n"
+            .'les affinités de carte reposent sur la géométrie des lieux et restent subjectives. '
+            .'Conserve les noms Brawl, Dive et Poke : ne traduis pas Dive par « plongée » ou « plongeur », '
+            .'et n’ajoute pas « Rush » après Brawl. '
+            .'Si map_data_unavailable vaut true, signale que les informations de carte manquent au lieu de les inventer. '
+            ."Nuance les conseils selon la carte, les compositions, les perks et l’exécution.\n"
             .'Données : '.json_encode([
                 'heroes' => $knowledge,
                 'hero_data_unavailable' => $unavailableHeroes,
                 'catalog_fetched_at' => $catalog['fetched_at'],
+                'map_data_unavailable' => $mapDataUnavailable,
                 'composition_guide' => $this->counterwatch->compositionGuide(),
             ], JSON_THROW_ON_ERROR | JSON_UNESCAPED_UNICODE | JSON_PRESERVE_ZERO_FRACTION);
     }
