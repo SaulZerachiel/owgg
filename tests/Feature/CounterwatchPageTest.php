@@ -1,6 +1,7 @@
 <?php
 
 use App\Models\User;
+use App\Services\CounterwatchGuide;
 use Illuminate\Foundation\Testing\RefreshDatabase;
 use Illuminate\Http\Client\Request;
 use Illuminate\Support\Facades\Cache;
@@ -62,18 +63,18 @@ test('authenticated users can browse heroes and role-specific matchup suggestion
             ->has('heroes', 10)
             ->where('heroes.0.key', 'ana')
             ->where('heroes.0.guide.styles.0.label', 'Poke')
-            ->has('heroes.0.guide.counters.tank', 1)
-            ->has('heroes.0.guide.counters.damage', 1)
-            ->has('heroes.0.guide.counters.support', 1)
+            ->has('heroes.0.guide.counters.tank', 3)
+            ->has('heroes.0.guide.counters.damage', 3)
+            ->has('heroes.0.guide.counters.support', 3)
             ->has('heroes.0.guide.maps.favorable', 3)
             ->has('heroes.0.guide.maps.difficult', 3)
             ->where('tierList.0.key', 'doomfist')
             ->where('tierList.0.winrate', 54)
             ->where('heroes.0.guide.counters.tank.0.key', 'winston')
-            ->where('heroes.0.guide.counters.tank.0.score', 1)
             ->where('heroes.0.guide.counters.tank.0.winrateDifference', 2)
             ->where('heroes.0.guide.counters.damage.0.key', 'tracer')
             ->where('heroes.0.guide.counters.support.0.key', 'kiriko')
+            ->missing('heroes.0.guide.counters.tank.0.score')
             ->where('compositionGuide.cycle.0.beats', 'brawl')
             ->where('catalogError', null),
         );
@@ -103,6 +104,41 @@ test('authenticated users can browse heroes and role-specific matchup suggestion
         $request->url(),
         '/heroes/stats?platform=pc&gamemode=competitive&region=europe&order_by=winrate%3Adesc',
     ));
+});
+
+test('every curated hero receives three suggestions for every role', function () {
+    $guide = app(CounterwatchGuide::class);
+    $archetypeMatchups = $guide->archetypeMatchups();
+    $rosterByKey = [];
+
+    foreach ($archetypeMatchups as $matchup) {
+        $rosterByKey[$matchup['counter_hero_key']] = [
+            'key' => $matchup['counter_hero_key'],
+            'name' => $matchup['counter_hero_key'],
+            'role' => $matchup['role'],
+        ];
+    }
+
+    $profiles = (new ReflectionClass(CounterwatchGuide::class))
+        ->getReflectionConstant('HERO_PROFILES')
+        ->getValue();
+
+    foreach (array_keys($profiles) as $heroKey) {
+        $guideData = $guide->heroGuide(
+            ['key' => $heroKey, 'name' => $heroKey, 'role' => 'damage'],
+            array_values($rosterByKey),
+            matchups: $guide->matchups(),
+            archetypeMatchups: $archetypeMatchups,
+        );
+
+        foreach (['tank', 'damage', 'support'] as $role) {
+            $this->assertCount(
+                3,
+                $guideData['counters'][$role],
+                "Expected three {$role} suggestions for {$heroKey}.",
+            );
+        }
+    }
 });
 
 test('the matchup guide reports when the hero roster cannot be loaded', function () {
@@ -184,16 +220,28 @@ test('bastion matchup suggestions do not mistake negative relations for counters
                 ['key' => 'bastion', 'name' => 'Bastion', 'role' => 'damage'],
                 ['key' => 'winston', 'name' => 'Winston', 'role' => 'tank'],
                 ['key' => 'sigma', 'name' => 'Sigma', 'role' => 'tank'],
+                ['key' => 'dva', 'name' => 'D.Va', 'role' => 'tank'],
+                ['key' => 'orisa', 'name' => 'Orisa', 'role' => 'tank'],
                 ['key' => 'genji', 'name' => 'Genji', 'role' => 'damage'],
+                ['key' => 'pharah', 'name' => 'Pharah', 'role' => 'damage'],
+                ['key' => 'echo', 'name' => 'Echo', 'role' => 'damage'],
                 ['key' => 'ana', 'name' => 'Ana', 'role' => 'support'],
+                ['key' => 'zenyatta', 'name' => 'Zenyatta', 'role' => 'support'],
+                ['key' => 'baptiste', 'name' => 'Baptiste', 'role' => 'support'],
             ]),
             '/maps' => Http::response([]),
             '/heroes/stats' => Http::response([
                 ['hero' => 'bastion', 'winrate' => 50.0, 'pickrate' => 8.0],
                 ['hero' => 'winston', 'winrate' => 52.0, 'pickrate' => 6.0],
                 ['hero' => 'sigma', 'winrate' => 51.0, 'pickrate' => 5.0],
+                ['hero' => 'dva', 'winrate' => 49.0, 'pickrate' => 5.0],
+                ['hero' => 'orisa', 'winrate' => 48.0, 'pickrate' => 5.0],
                 ['hero' => 'genji', 'winrate' => 49.0, 'pickrate' => 12.0],
+                ['hero' => 'pharah', 'winrate' => 48.0, 'pickrate' => 5.0],
+                ['hero' => 'echo', 'winrate' => 47.0, 'pickrate' => 5.0],
                 ['hero' => 'ana', 'winrate' => 50.0, 'pickrate' => 20.0],
+                ['hero' => 'zenyatta', 'winrate' => 48.0, 'pickrate' => 5.0],
+                ['hero' => 'baptiste', 'winrate' => 47.0, 'pickrate' => 5.0],
             ]),
             default => Http::response([], 404),
         };
@@ -204,13 +252,15 @@ test('bastion matchup suggestions do not mistake negative relations for counters
         ->assertOk()
         ->assertInertia(fn (Assert $page) => $page
             ->where('selectedHeroKey', 'bastion')
-            ->has('heroes.0.guide.counters.tank', 1)
+            ->has('heroes.0.guide.counters.tank', 3)
             ->where('heroes.0.guide.counters.tank.0.key', 'sigma')
-            ->where('heroes.0.guide.counters.tank.0.score', 2)
-            ->has('heroes.0.guide.counters.damage', 1)
+            ->where('heroes.0.guide.counters.tank.1.key', 'dva')
+            ->where('heroes.0.guide.counters.tank.2.key', 'orisa')
+            ->has('heroes.0.guide.counters.damage', 3)
             ->where('heroes.0.guide.counters.damage.0.key', 'genji')
-            ->has('heroes.0.guide.counters.support', 1)
-            ->where('heroes.0.guide.counters.support.0.key', 'ana'),
+            ->has('heroes.0.guide.counters.support', 3)
+            ->where('heroes.0.guide.counters.support.0.key', 'ana')
+            ->missing('heroes.0.guide.counters.tank.0.score'),
         );
 });
 
