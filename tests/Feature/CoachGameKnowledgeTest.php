@@ -1,10 +1,15 @@
 <?php
 
 use App\Services\CoachGameKnowledgeBuilder;
+use Illuminate\Foundation\Testing\RefreshDatabase;
 use Illuminate\Http\Client\Request;
+use Illuminate\Support\Facades\Cache;
 use Illuminate\Support\Facades\Http;
 
+uses(RefreshDatabase::class);
+
 test('the coach receives current abilities and perks for heroes in the conversation', function () {
+    Cache::flush();
     Http::fake(function (Request $request) {
         return match (parse_url($request->url(), PHP_URL_PATH)) {
             '/heroes' => Http::response([
@@ -43,6 +48,14 @@ test('the coach receives current abilities and perks for heroes in the conversat
                     'major' => [],
                 ],
             ]),
+            '/maps' => Http::response([
+                ['key' => 'kings-row', 'name' => 'King’s Row', 'uses' => ['standard']],
+                ['key' => 'lijiang-tower', 'name' => 'Lijiang Tower', 'uses' => ['standard']],
+                ['key' => 'samoa', 'name' => 'Samoa', 'uses' => ['standard']],
+                ['key' => 'circuit-royal', 'name' => 'Circuit Royal', 'uses' => ['standard']],
+                ['key' => 'havana', 'name' => 'Havana', 'uses' => ['standard']],
+                ['key' => 'junkertown', 'name' => 'Junkertown', 'uses' => ['standard']],
+            ]),
             default => Http::response([], 404),
         };
     });
@@ -64,13 +77,16 @@ test('the coach receives current abilities and perks for heroes in the conversat
         ->toContain('"name":"Cryo-Storm"')
         ->toContain('"counterwatch_guide"')
         ->toContain('"composition_guide"')
+        ->toContain('"key":"kings-row"')
         ->toContain('"key":"brawl"');
 
-    Http::assertSentCount(3);
+    Http::assertSentCount(4);
     Http::assertSent(fn (Request $request): bool => str_ends_with($request->url(), '/heroes?locale=fr-fr'));
+    Http::assertSent(fn (Request $request): bool => str_ends_with($request->url(), '/maps'));
 });
 
 test('the coach can answer when OverFast game data is temporarily unavailable', function () {
+    Cache::flush();
     Http::fake(fn () => Http::response([], 503));
 
     $context = app(CoachGameKnowledgeBuilder::class)->build('Comment jouer Mei ?');

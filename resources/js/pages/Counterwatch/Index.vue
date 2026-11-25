@@ -1,5 +1,5 @@
 <script setup lang="ts">
-import { Head } from '@inertiajs/vue3';
+import { Head, router } from '@inertiajs/vue3';
 import {
     ArrowDown,
     ArrowRight,
@@ -18,6 +18,22 @@ type CounterPick = {
     key: string;
     name: string;
     reason: string;
+    winrate: number | null;
+    winrateDifference: number | null;
+};
+
+type TierListHero = {
+    key: string;
+    name: string;
+    role: HeroRole;
+    winrate: number;
+    pickrate: number | null;
+};
+
+type MapRecommendation = {
+    key: string;
+    name: string;
+    reason: string;
 };
 
 type HeroGuide = {
@@ -25,6 +41,10 @@ type HeroGuide = {
     strengths: string[];
     weaknesses: string[];
     counters: Record<HeroRole, CounterPick[]>;
+    maps: {
+        favorable: MapRecommendation[];
+        difficult: MapRecommendation[];
+    };
     confidence: 'curated' | 'inferred';
 };
 
@@ -46,6 +66,14 @@ type CompositionCycleItem = {
 const props = defineProps<{
     heroes: CounterwatchHero[];
     catalogError: string | null;
+    mapCatalogError: string | null;
+    heroStatsError: string | null;
+    availableMaps: { key: string; name: string }[];
+    tierList: TierListHero[];
+    selectedMapKey: string | null;
+    selectedMapName: string | null;
+    selectedHeroKey: string | null;
+    statsScope: string;
     compositionGuide: {
         cycle: CompositionCycleItem[];
         caveat: string;
@@ -76,9 +104,10 @@ const roleIcons = {
     support: HeartPulse,
 };
 const roleFilter = ref<RoleFilter>('all');
+const tierRoleFilter = ref<RoleFilter>('all');
 const query = ref('');
 const searchOpen = ref(false);
-const selectedKey = ref(props.heroes[0]?.key ?? '');
+const selectedKey = ref(props.selectedHeroKey ?? props.heroes[0]?.key ?? '');
 const selectedHero = computed(
     () => props.heroes.find((hero) => hero.key === selectedKey.value) ?? null,
 );
@@ -113,6 +142,25 @@ const filteredHeroes = computed(() => {
         })
         .slice(0, 8);
 });
+const sortedTierList = computed(() =>
+    [...props.tierList]
+        .filter(
+            (hero) =>
+                tierRoleFilter.value === 'all' ||
+                hero.role === tierRoleFilter.value,
+        )
+        .sort((a, b) => b.winrate - a.winrate || a.name.localeCompare(b.name)),
+);
+const tierGroups = computed(() =>
+    ['S', 'A', 'B', 'C', 'D']
+        .map((tier) => ({
+            tier,
+            heroes: sortedTierList.value.filter(
+                (hero) => tierFor(hero.winrate) === tier,
+            ),
+        }))
+        .filter((group) => group.heroes.length > 0),
+);
 
 function chooseHero(hero: CounterwatchHero): void {
     selectedKey.value = hero.key;
@@ -122,6 +170,42 @@ function chooseHero(hero: CounterwatchHero): void {
 
 function roleClass(role: HeroRole): string {
     return `role-${role}`;
+}
+
+function tierFor(winrate: number): string {
+    if (winrate >= 53) {
+        return 'S';
+    }
+
+    if (winrate >= 51) {
+        return 'A';
+    }
+
+    if (winrate >= 49) {
+        return 'B';
+    }
+
+    if (winrate >= 47) {
+        return 'C';
+    }
+
+    return 'D';
+}
+
+function changeMap(event: Event): void {
+    const target = event.target;
+    if (!(target instanceof HTMLSelectElement)) {
+        return;
+    }
+
+    router.get(
+        '/counterwatch',
+        {
+            ...(target.value ? { map: target.value } : {}),
+            ...(selectedKey.value ? { hero: selectedKey.value } : {}),
+        },
+        { preserveScroll: true },
+    );
 }
 </script>
 
@@ -143,38 +227,40 @@ function roleClass(role: HeroRole): string {
                         : le timing et l’équipe comptent.
                     </p>
                 </div>
-                <div class="search-panel">
-                    <label for="hero-search">ANALYSER UN HÉROS</label>
-                    <div class="search-control">
-                        <Search class="search-icon" aria-hidden="true" />
-                        <input
-                            id="hero-search"
-                            v-model="query"
-                            type="search"
-                            autocomplete="off"
-                            placeholder="Ex. Ana, Pharah, D.Va…"
-                            aria-controls="hero-search-results"
-                            :aria-expanded="
-                                searchOpen && filteredHeroes.length > 0
-                            "
-                            @focus="searchOpen = true"
-                            @keydown.esc="searchOpen = false"
-                        />
-                    </div>
-                    <div
-                        class="role-filters"
-                        aria-label="Filtrer les héros par rôle"
-                    >
-                        <button
-                            v-for="filter in roleFilters"
-                            :key="filter.key"
-                            type="button"
-                            :aria-pressed="roleFilter === filter.key"
-                            :class="{ active: roleFilter === filter.key }"
-                            @click="roleFilter = filter.key"
+                <div class="search-wrapper">
+                    <div class="search-panel">
+                        <label for="hero-search">ANALYSER UN HÉROS</label>
+                        <div class="search-control">
+                            <Search class="search-icon" aria-hidden="true" />
+                            <input
+                                id="hero-search"
+                                v-model="query"
+                                type="search"
+                                autocomplete="off"
+                                placeholder="Ex. Ana, Pharah, D.Va…"
+                                aria-controls="hero-search-results"
+                                :aria-expanded="
+                                    searchOpen && filteredHeroes.length > 0
+                                "
+                                @focus="searchOpen = true"
+                                @keydown.esc="searchOpen = false"
+                            />
+                        </div>
+                        <div
+                            class="role-filters"
+                            aria-label="Filtrer les héros par rôle"
                         >
-                            {{ filter.label }}
-                        </button>
+                            <button
+                                v-for="filter in roleFilters"
+                                :key="filter.key"
+                                type="button"
+                                :aria-pressed="roleFilter === filter.key"
+                                :class="{ active: roleFilter === filter.key }"
+                                @click="roleFilter = filter.key"
+                            >
+                                {{ filter.label }}
+                            </button>
+                        </div>
                     </div>
                     <div
                         v-if="searchOpen && filteredHeroes.length > 0"
@@ -220,6 +306,104 @@ function roleClass(role: HeroRole): string {
             <section v-if="catalogError" class="catalog-error" role="status">
                 <strong>Roster indisponible</strong>
                 <span>{{ catalogError }}</span>
+            </section>
+
+            <section
+                class="tierlist-section ow-panel"
+                aria-labelledby="tierlist-title"
+            >
+                <div class="section-heading">
+                    <div>
+                        <p class="eyebrow">
+                            MÉTA // STATISTIQUES DE CLASSEMENT
+                        </p>
+                        <h2 id="tierlist-title">TIER LIST PAR WINRATE</h2>
+                    </div>
+                    <span class="section-tag">{{ statsScope }}</span>
+                </div>
+                <div class="tierlist-controls">
+                    <label for="stats-map">CARTE</label>
+                    <select
+                        id="stats-map"
+                        :value="selectedMapKey ?? ''"
+                        @change="changeMap"
+                    >
+                        <option value="">Toutes les cartes</option>
+                        <option
+                            v-for="map in availableMaps"
+                            :key="map.key"
+                            :value="map.key"
+                        >
+                            {{ map.name }}
+                        </option>
+                    </select>
+                    <div
+                        class="role-filters tier-role-filters"
+                        aria-label="Filtrer la tier list par rôle"
+                    >
+                        <button
+                            v-for="filter in roleFilters"
+                            :key="filter.key"
+                            type="button"
+                            :aria-pressed="tierRoleFilter === filter.key"
+                            :class="{ active: tierRoleFilter === filter.key }"
+                            @click="tierRoleFilter = filter.key"
+                        >
+                            {{ filter.label }}
+                        </button>
+                    </div>
+                </div>
+                <p class="tierlist-note">
+                    Source : OverFast (cache d’une heure). Le pickrate mesure la
+                    popularité, pas la taille exacte de l’échantillon. Les rangs
+                    OWGG se basent uniquement sur le winrate : S ≥ 53 %, A ≥ 51
+                    %, B ≥ 49 %, C ≥ 47 %, D &lt; 47 %. Ce n’est pas une mesure
+                    absolue de puissance.
+                </p>
+                <p v-if="heroStatsError" class="map-error" role="status">
+                    {{ heroStatsError }}
+                </p>
+                <div v-else-if="tierGroups.length" class="tier-groups">
+                    <section
+                        v-for="group in tierGroups"
+                        :key="group.tier"
+                        class="tier-group"
+                        :class="`tier-${group.tier.toLowerCase()}`"
+                    >
+                        <h3>{{ group.tier }}</h3>
+                        <ol>
+                            <li v-for="hero in group.heroes" :key="hero.key">
+                                <button
+                                    type="button"
+                                    :class="{
+                                        selected: selectedKey === hero.key,
+                                    }"
+                                    @click="selectedKey = hero.key"
+                                >
+                                    <span class="tier-hero-name">
+                                        {{ hero.name }}
+                                        <small>{{
+                                            roleNames[hero.role]
+                                        }}</small>
+                                    </span>
+                                    <span class="tier-hero-stats">
+                                        <strong
+                                            >{{
+                                                hero.winrate.toFixed(1)
+                                            }}%</strong
+                                        >
+                                        <small v-if="hero.pickrate !== null">
+                                            Pick {{ hero.pickrate.toFixed(1) }}%
+                                        </small>
+                                    </span>
+                                </button>
+                            </li>
+                        </ol>
+                    </section>
+                </div>
+                <p v-else class="tierlist-empty">
+                    Aucune statistique n’est disponible pour ce filtre.
+                </p>
             </section>
 
             <template v-if="selectedHero">
@@ -311,6 +495,74 @@ function roleClass(role: HeroRole): string {
                     </div>
                 </section>
 
+                <section class="map-section" aria-labelledby="map-title">
+                    <div class="section-heading">
+                        <div>
+                            <p class="eyebrow">
+                                GÉOMÉTRIE // ENVIRONNEMENT DE JEU
+                            </p>
+                            <h2 id="map-title">SES CARTES FAVORABLES</h2>
+                        </div>
+                        <span class="section-tag"
+                            >3 FAVORABLES · 3 EXIGEANTES</span
+                        >
+                    </div>
+                    <p class="map-intro">
+                        Ces tendances viennent de la géométrie des cartes, pas
+                        de statistiques de victoire. Le point, le côté attaque /
+                        défense et la composition adverse peuvent changer le
+                        résultat.
+                    </p>
+                    <p v-if="mapCatalogError" class="map-error" role="status">
+                        {{ mapCatalogError }}
+                    </p>
+                    <div class="map-columns">
+                        <article class="map-set favorable ow-panel">
+                            <h3>CARTES OÙ IL EXCELLE</h3>
+                            <ol v-if="selectedHero.guide.maps.favorable.length">
+                                <li
+                                    v-for="map in selectedHero.guide.maps
+                                        .favorable"
+                                    :key="map.key"
+                                >
+                                    <strong>{{ map.name }}</strong>
+                                    <p>{{ map.reason }}</p>
+                                </li>
+                            </ol>
+                            <p v-else class="map-empty">
+                                Les cartes ne sont pas disponibles pour le
+                                moment.
+                            </p>
+                        </article>
+                        <article class="map-set difficult ow-panel">
+                            <h3>CARTES PLUS EXIGEANTES</h3>
+                            <ol v-if="selectedHero.guide.maps.difficult.length">
+                                <li
+                                    v-for="map in selectedHero.guide.maps
+                                        .difficult"
+                                    :key="map.key"
+                                >
+                                    <strong>{{ map.name }}</strong>
+                                    <p>{{ map.reason }}</p>
+                                </li>
+                            </ol>
+                            <p v-else class="map-empty">
+                                Les cartes ne sont pas disponibles pour le
+                                moment.
+                            </p>
+                        </article>
+                    </div>
+                    <a
+                        class="counterwatch-external"
+                        href="https://www.counterwatch.gg/stats/overwatch/team-builder"
+                        target="_blank"
+                        rel="noreferrer"
+                    >
+                        Pour davantage d’informations, consulter Counterwatch
+                        <ArrowRight aria-hidden="true" />
+                    </a>
+                </section>
+
                 <section
                     class="counter-section"
                     aria-labelledby="counter-title"
@@ -328,6 +580,13 @@ function roleClass(role: HeroRole): string {
                         Ces choix indiquent des leviers de jeu, pas un
                         classement universel. Garde le héros qui répond au
                         problème concret et que tu sais jouer.
+                    </p>
+                    <p class="counter-stats-note">
+                        Le winrate compare la performance globale de chaque
+                        héros{{
+                            selectedMapName ? ` sur ${selectedMapName}` : ''
+                        }}; ce n’est pas son taux de victoire contre
+                        {{ selectedHero.name }}.
                     </p>
 
                     <div class="counter-grid">
@@ -367,6 +626,32 @@ function roleClass(role: HeroRole): string {
                                     <div>
                                         <strong>{{ pick.name }}</strong>
                                         <p>{{ pick.reason }}</p>
+                                        <p
+                                            v-if="pick.winrate !== null"
+                                            class="counter-pick-stats"
+                                        >
+                                            {{ pick.winrate.toFixed(1) }}% de
+                                            winrate
+                                            <span
+                                                v-if="
+                                                    pick.winrateDifference !==
+                                                    null
+                                                "
+                                            >
+                                                ·
+                                                {{
+                                                    pick.winrateDifference > 0
+                                                        ? '+'
+                                                        : ''
+                                                }}{{
+                                                    pick.winrateDifference.toFixed(
+                                                        1,
+                                                    )
+                                                }}
+                                                pts vs
+                                                {{ selectedHero.name }}
+                                            </span>
+                                        </p>
                                     </div>
                                 </li>
                             </ol>
@@ -383,7 +668,7 @@ function roleClass(role: HeroRole): string {
                             target="_blank"
                             rel="noreferrer"
                         >
-                            Source du roster : OverFast
+                            Sources du roster et des cartes : OverFast
                         </a>
                     </p>
                 </section>
@@ -531,6 +816,12 @@ function roleClass(role: HeroRole): string {
     color: var(--text-dim);
     font-size: 0.94rem;
     line-height: 1.65;
+}
+
+.search-wrapper {
+    position: relative;
+    z-index: 10;
+    min-width: 0;
 }
 
 .search-panel {
@@ -852,6 +1143,7 @@ input:focus-visible {
 }
 
 .counter-section,
+.map-section,
 .composition-section {
     margin-top: clamp(32px, 5vw, 54px);
 }
@@ -868,6 +1160,155 @@ input:focus-visible {
     border-color: var(--surface-line-strong);
     color: var(--text-mute);
     white-space: nowrap;
+}
+
+.tierlist-section {
+    margin-bottom: clamp(32px, 5vw, 54px);
+    padding: clamp(18px, 3vw, 28px);
+}
+
+.tierlist-controls {
+    display: flex;
+    align-items: center;
+    gap: 10px;
+    margin-top: 20px;
+}
+
+.tierlist-controls > label {
+    color: var(--text-mute);
+    font-size: 0.62rem;
+    font-weight: 800;
+    letter-spacing: 0.08em;
+}
+
+.tierlist-controls select {
+    min-width: 190px;
+    padding: 9px 30px 9px 11px;
+    border: 1px solid var(--surface-line-strong);
+    background: var(--bg-1);
+    color: var(--text);
+    font: inherit;
+    font-size: 0.75rem;
+}
+
+.tier-role-filters {
+    margin-left: auto;
+}
+
+.tierlist-note,
+.counter-stats-note {
+    margin: 12px 0 16px;
+    color: var(--text-mute);
+    font-size: 0.7rem;
+    line-height: 1.55;
+}
+
+.counter-stats-note {
+    margin: -5px 0 16px;
+}
+
+.tier-groups {
+    display: grid;
+    grid-template-columns: repeat(5, minmax(0, 1fr));
+    gap: 10px;
+}
+
+.tier-group {
+    min-width: 0;
+    border-top: 2px solid var(--tier-color);
+    background: var(--bg-1);
+}
+
+.tier-s {
+    --tier-color: var(--win);
+}
+
+.tier-a {
+    --tier-color: var(--ow-orange);
+}
+
+.tier-b {
+    --tier-color: var(--role-tank);
+}
+
+.tier-c {
+    --tier-color: var(--role-damage);
+}
+
+.tier-d {
+    --tier-color: var(--text-mute);
+}
+
+.tier-group h3 {
+    margin: 0;
+    padding: 10px 12px;
+    border-bottom: 1px solid var(--surface-line);
+    color: var(--tier-color);
+    font-family: var(--font-heading);
+    font-size: 1.1rem;
+    font-style: italic;
+}
+
+.tier-group ol {
+    display: grid;
+    gap: 2px;
+    margin: 0;
+    padding: 5px;
+    list-style: none;
+}
+
+.tier-group button {
+    display: flex;
+    width: 100%;
+    align-items: center;
+    justify-content: space-between;
+    gap: 8px;
+    padding: 8px;
+    border: 1px solid transparent;
+    background: transparent;
+    color: var(--text);
+    cursor: pointer;
+    text-align: left;
+}
+
+.tier-group button:hover,
+.tier-group button.selected {
+    border-color: var(--tier-color);
+    background: var(--bg-2);
+}
+
+.tier-hero-name,
+.tier-hero-stats {
+    display: grid;
+    gap: 3px;
+}
+
+.tier-hero-name {
+    font-size: 0.73rem;
+    font-weight: 700;
+}
+
+.tier-hero-name small,
+.tier-hero-stats small {
+    color: var(--text-mute);
+    font-size: 0.58rem;
+}
+
+.tier-hero-stats {
+    flex: 0 0 auto;
+    text-align: right;
+}
+
+.tier-hero-stats strong {
+    color: var(--tier-color);
+    font-size: 0.76rem;
+    font-variant-numeric: tabular-nums;
+}
+
+.tierlist-empty {
+    margin: 0;
+    color: var(--text-dim);
+    font-size: 0.78rem;
 }
 
 .counter-intro,
@@ -963,6 +1404,13 @@ input:focus-visible {
     line-height: 1.5;
 }
 
+.counter-pick .counter-pick-stats {
+    margin-top: 5px;
+    color: var(--ow-orange);
+    font-size: 0.67rem;
+    font-weight: 700;
+}
+
 .counter-empty {
     padding-top: 15px;
 }
@@ -978,6 +1426,108 @@ input:focus-visible {
     margin-left: 4px;
     color: var(--text-dim);
     text-underline-offset: 3px;
+}
+
+.map-intro {
+    max-width: 90ch;
+    margin: 12px 0 18px;
+    color: var(--text-dim);
+    font-size: 0.8rem;
+    line-height: 1.6;
+}
+
+.map-columns {
+    display: grid;
+    grid-template-columns: repeat(2, minmax(0, 1fr));
+    gap: 14px;
+}
+
+.map-set {
+    padding: 18px;
+    border-top: 2px solid var(--map-color);
+}
+
+.map-set.favorable {
+    --map-color: var(--win);
+}
+
+.map-set.difficult {
+    --map-color: var(--loss);
+}
+
+.map-set h3 {
+    margin: 0;
+    color: var(--map-color);
+    font-family: var(--font-heading);
+    font-size: 1rem;
+    font-style: italic;
+    letter-spacing: 0.06em;
+}
+
+.map-set ol {
+    display: grid;
+    gap: 14px;
+    margin: 15px 0 0;
+    padding: 0;
+    list-style: none;
+}
+
+.map-set li {
+    padding-top: 12px;
+    border-top: 1px solid var(--surface-line);
+}
+
+.map-set li:first-child {
+    padding-top: 0;
+    border-top: 0;
+}
+
+.map-set li strong {
+    display: block;
+    margin-bottom: 4px;
+    color: var(--text);
+    font-size: 0.81rem;
+}
+
+.map-set li p,
+.map-empty,
+.map-error {
+    margin: 0;
+    color: var(--text-dim);
+    font-size: 0.75rem;
+    line-height: 1.55;
+}
+
+.map-empty {
+    margin-top: 14px;
+}
+
+.map-error {
+    margin-bottom: 14px;
+    padding: 10px 12px;
+    border-left: 2px solid var(--loss);
+    background: var(--bg-1);
+}
+
+.counterwatch-external {
+    display: inline-flex;
+    align-items: center;
+    gap: 7px;
+    margin-top: 15px;
+    color: var(--ow-orange);
+    font-size: 0.72rem;
+    font-weight: 800;
+    text-decoration: none;
+    text-underline-offset: 3px;
+}
+
+.counterwatch-external:hover {
+    text-decoration: underline;
+}
+
+.counterwatch-external svg {
+    width: 14px;
+    height: 14px;
 }
 
 .composition-section {
@@ -1180,6 +1730,10 @@ input:focus-visible {
     .counter-grid {
         grid-template-columns: 1fr;
     }
+
+    .tier-groups {
+        grid-template-columns: repeat(3, minmax(0, 1fr));
+    }
 }
 
 @media (max-width: 640px) {
@@ -1188,7 +1742,8 @@ input:focus-visible {
     }
 
     .strength-weakness,
-    .cycle-grid {
+    .cycle-grid,
+    .map-columns {
         grid-template-columns: 1fr;
     }
 
@@ -1199,6 +1754,19 @@ input:focus-visible {
 
     .section-tag {
         white-space: normal;
+    }
+
+    .tierlist-controls {
+        align-items: flex-start;
+        flex-direction: column;
+    }
+
+    .tier-role-filters {
+        margin-left: 0;
+    }
+
+    .tier-groups {
+        grid-template-columns: repeat(2, minmax(0, 1fr));
     }
 
     .cycle-card > p {

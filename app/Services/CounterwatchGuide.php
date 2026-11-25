@@ -2,6 +2,8 @@
 
 namespace App\Services;
 
+use App\Models\CounterwatchMatchup;
+
 final class CounterwatchGuide
 {
     private const HERO_PROFILES = [
@@ -66,7 +68,7 @@ final class CounterwatchGuide
         ],
         'backline' => [
             'strengths' => ['Apporte soin ou utilité à distance sans devoir suivre le tank au contact.', 'Peut peser sur le rythme du combat avec ses capacités plutôt qu’avec les seuls dégâts.'],
-            'weaknesses' => ['Une plongée coordonnée ou des angles multiples peuvent lui couper ses lignes de vue.', 'Sa valeur dépend souvent du placement et du soutien de son équipe.'],
+            'weaknesses' => ['Une Dive coordonnée ou des angles multiples peuvent lui couper ses lignes de vue.', 'Sa valeur dépend souvent du placement et du soutien de son équipe.'],
         ],
         'brawl' => [
             'strengths' => ['Excelle quand l’équipe avance groupée et peut maintenir la pression à courte portée.', 'Les espaces resserrés et les objectifs rapprochés favorisent son impact.'],
@@ -90,11 +92,11 @@ final class CounterwatchGuide
         ],
         'poke' => [
             'strengths' => ['Use la ligne adverse à distance et profite des longues lignes de vue.', 'Peut forcer l’ennemi à dépenser des ressources avant même le combat rapproché.'],
-            'weaknesses' => ['Les couvertures et les rotations rapides réduisent le temps passé sous pression.', 'Une plongée coordonnée peut atteindre ses positions avant qu’il ne reprenne ses distances.'],
+            'weaknesses' => ['Les couvertures et les rotations rapides réduisent le temps passé sous pression.', 'Une Dive coordonnée peut atteindre ses positions avant qu’il ne reprenne ses distances.'],
         ],
         'sniper' => [
             'strengths' => ['Punit les traversées prévisibles et crée une menace de tir qui modifie les déplacements adverses.', 'Les longues lignes de vue et les hauteurs augmentent sa portée d’influence.'],
-            'weaknesses' => ['Les couvertures, les boucliers et les engagements par plusieurs angles limitent ses tirs.', 'Une plongée qui l’atteint l’oblige à choisir entre fuir et continuer à viser.'],
+            'weaknesses' => ['Les couvertures, les boucliers et les engagements par plusieurs angles limitent ses tirs.', 'Une Dive qui l’atteint l’oblige à choisir entre fuir et continuer à viser.'],
         ],
         'support' => [
             'strengths' => ['Peut sauver un allié, retourner un duel ou accélérer une rotation selon son kit.', 'Sa mobilité ou ses outils de survie lui permettent parfois de tenir une position risquée.'],
@@ -105,7 +107,7 @@ final class CounterwatchGuide
     private const HERO_NOTES = [
         'ana' => [
             'strengths' => ['Soin à longue portée et utilitaires capables de retourner un combat.', 'La grenade peut punir un regroupement ou soutenir une fenêtre d’élimination.'],
-            'weaknesses' => ['Peu d’outils de déplacement : une plongée coordonnée peut la forcer à utiliser Sommeil en défense.', 'Ses lignes de vue et ses temps de recharge comptent davantage que son seul choix de composition.'],
+            'weaknesses' => ['Peu d’outils de déplacement : une Dive coordonnée peut la forcer à utiliser Sommeil en défense.', 'Ses lignes de vue et ses temps de recharge comptent davantage que son seul choix de composition.'],
         ],
         'mei' => [
             'strengths' => ['Le Mur peut couper une ligne de vue, isoler une cible ou protéger une capacité canalisée.', 'Ses ralentissements et son gel de zone compliquent les engagements prévisibles.'],
@@ -113,179 +115,45 @@ final class CounterwatchGuide
         ],
         'pharah' => [
             'strengths' => ['Les angles aériens et les dégâts de zone punissent les équipes regroupées ou peu mobiles.', 'Peut créer une menace depuis des positions que les adversaires au sol contestent difficilement.'],
-            'weaknesses' => ['Les tirs précis à distance et la pression de D.Va sont des réponses fréquentes.', 'Elle n’est pas automatiquement forte contre une composition Dive : les plongeurs mobiles peuvent la contester ou atteindre son équipe.'],
+            'weaknesses' => ['Les tirs précis à distance et la pression de D.Va sont des réponses fréquentes.', 'Elle n’est pas automatiquement forte contre une composition Dive : les héros mobiles peuvent la contester ou atteindre son équipe.'],
         ],
     ];
 
-    private const COUNTERS = [
-        'air' => [
-            'tank' => [
-                ['dva', 'Peut contester les airs avec sa mobilité et intercepter des projectiles avec Matrice défensive.'],
-                ['winston', 'Peut protéger une ligne arrière sous pression ou rejoindre une cible qui atterrit.'],
-                ['sigma', 'Peut contester des angles à distance et protéger une ligne de tir avec sa barrière.'],
+    private const MAP_GUIDES = [
+        'sightline' => [
+            'favorable' => [
+                ['circuit-royal', 'Les longues avenues, surtout au premier segment, offrent des lignes de tir dégagées aux héros qui veulent garder leurs distances.'],
+                ['havana', 'Les approches ouvertes et les longues rues récompensent la portée; les zones urbaines raccourcissent toutefois certains duels.'],
+                ['junkertown', 'Les premiers segments exposent le convoi sur de longues lignes et donnent plusieurs positions en hauteur.'],
             ],
-            'damage' => [
-                ['cassidy', 'Ses tirs précis menacent les trajectoires prévisibles à portée moyenne.'],
-                ['ashe', 'Peut contester les airs depuis une ligne de vue dégagée et garder ses distances.'],
-                ['soldier-76', 'Sa pression continue aide à forcer une cible aérienne à se mettre à couvert.'],
-            ],
-            'support' => [
-                ['ana', 'Peut contribuer à distance si elle garde une ligne de vue sûre.'],
-                ['illari', 'Peut ajouter une pression précise à distance sans quitter sa position.'],
-                ['baptiste', 'Ses tirs peuvent contribuer contre une cible aérienne depuis une bonne ligne de vue.'],
+            'difficult' => [
+                ['kings-row', 'Les rues étroites et les angles cassés raccourcissent souvent les lignes de tir.'],
+                ['lijiang-tower', 'Control Center et Night Market sont resserrés; Garden est plus ouvert, donc l’avantage dépend du sous-plan.'],
+                ['samoa', 'Plusieurs zones de combat sont entourées de bâtiments et de couvertures qui coupent les longues lignes de vue.'],
             ],
         ],
-        'backline' => [
-            'tank' => [
-                ['winston', 'Sa mobilité lui permet de menacer la ligne arrière et de couper des lignes de vue.'],
-                ['dva', 'Peut engager rapidement une cible isolée et couvrir la retraite de son équipe.'],
-                ['doomfist', 'Peut créer une interruption et déplacer une cible hors de sa position confortable.'],
+        'close' => [
+            'favorable' => [
+                ['kings-row', 'Les rues étroites et les nombreux coins permettent d’approcher sous couvert et de forcer des combats rapprochés.'],
+                ['lijiang-tower', 'Control Center et Night Market favorisent les engagements autour d’objectifs compacts; Garden est plus ouvert.'],
+                ['samoa', 'Downtown et Volcano offrent des zones resserrées où une équipe groupée peut tenir l’espace; Beach est plus ouvert.'],
             ],
-            'damage' => [
-                ['tracer', 'Peut arriver par un angle latéral et forcer la cible à détourner son attention.'],
-                ['venture', 'Peut arriver par un angle inattendu et menacer une cible isolée à courte portée.'],
-                ['genji', 'Peut exploiter les hauteurs et suivre une cible qui tente de s’échapper.'],
-            ],
-            'support' => [
-                ['brigitte', 'Peut protéger une ligne arrière menacée et rendre l’approche directe plus coûteuse.'],
-                ['kiriko', 'Peut rejoindre un allié sous pression et aider à survivre à une fenêtre de burst.'],
-                ['lucio', 'Peut accélérer une rotation groupée pour fermer la distance ou sortir d’une ligne de tir.'],
+            'difficult' => [
+                ['circuit-royal', 'Les longues traversées exposées donnent à l’adversaire le temps de faire des dégâts avant l’engagement.'],
+                ['havana', 'Les lignes de tir longues et les segments ouverts rendent l’approche au contact plus coûteuse.'],
+                ['junkertown', 'Les premiers segments offrent de longues lignes et des hauteurs qui peuvent retarder une entrée groupée.'],
             ],
         ],
-        'brawl' => [
-            'tank' => [
-                ['sigma', 'Peut contrôler une ligne de tir et forcer un adversaire de courte portée à avancer sous pression.'],
-                ['orisa', 'Peut contester l’espace frontal et ralentir une avancée directe.'],
-                ['ramattra', 'Peut alterner pression à distance et présence au contact selon la fenêtre d’engagement.'],
+        'vertical' => [
+            'favorable' => [
+                ['watchpoint-gibraltar', 'Les hauteurs successives, les passerelles et les accès latéraux créent plusieurs routes d’engagement et de sortie.'],
+                ['dorado', 'Les toits et les ruelles latérales permettent de changer d’angle et d’atteindre les positions arrière.'],
+                ['numbani', 'Les différences de hauteur et les accès parallèles facilitent les attaques depuis plusieurs directions.'],
             ],
-            'damage' => [
-                ['pharah', 'Peut attaquer depuis un angle vertical et éviter une partie de la pression au sol.'],
-                ['bastion', 'Peut opposer une forte pression frontale si l’équipe lui crée une ligne de tir sûre.'],
-                ['echo', 'Peut exploiter les angles verticaux et punir une cible déjà affaiblie.'],
-            ],
-            'support' => [
-                ['ana', 'Sa grenade peut gêner un engagement groupé si elle est lancée au bon moment.'],
-                ['illari', 'Peut maintenir une pression à distance tout en soignant depuis un angle sûr.'],
-                ['lifeweaver', 'Peut déplacer un allié hors d’un engagement ou casser une ligne de front.'],
-            ],
-        ],
-        'deployable' => [
-            'tank' => [
-                ['winston', 'Peut franchir la zone contrôlée et forcer les défenseurs à se retourner.'],
-                ['dva', 'Peut traverser rapidement un angle ou une position statique et perturber son installation.'],
-                ['doomfist', 'Peut atteindre les positions arrière et déplacer les défenseurs hors de leur zone.'],
-            ],
-            'damage' => [
-                ['pharah', 'Peut attaquer la zone depuis les airs sans emprunter les accès au sol habituels.'],
-                ['junkrat', 'Peut déloger une position fixe avec des dégâts de zone et des rebonds.'],
-                ['echo', 'Peut contourner une installation statique avec ses angles verticaux.'],
-            ],
-            'support' => [
-                ['lucio', 'Peut accélérer l’équipe pour traverser la zone avant qu’elle ne soit verrouillée.'],
-                ['kiriko', 'Peut aider un allié à rejoindre une position difficile ou à sortir d’un contrôle.'],
-                ['moira', 'Peut traverser une zone dangereuse et continuer à soutenir une entrée rapprochée.'],
-            ],
-        ],
-        'dive' => [
-            'tank' => [
-                ['orisa', 'Peut tenir sa position et gêner une entrée directe avec ses outils de contrôle.'],
-                ['junker-queen', 'Peut soutenir un combat rapproché groupé et punir une cible qui reste à portée.'],
-                ['reinhardt', 'Peut protéger ses alliés si l’équipe reste compacte et joue autour de son bouclier.'],
-            ],
-            'damage' => [
-                ['mei', 'Peut ralentir une entrée et placer un mur pour isoler ou couper la retraite.'],
-                ['cassidy', 'Peut menacer les engagements qui arrivent dans sa portée et protéger un allié proche.'],
-                ['torbjorn', 'Peut ajouter une menace de zone et compliquer les approches répétées.'],
-            ],
-            'support' => [
-                ['brigitte', 'Peut protéger la ligne arrière et rendre les engagements rapprochés moins sûrs.'],
-                ['moira', 'Peut survivre à une pression rapprochée et continuer à soutenir son équipe.'],
-                ['illari', 'Peut soutenir une ligne arrière qui joue groupée et punir une entrée visible.'],
-            ],
-        ],
-        'flanker' => [
-            'tank' => [
-                ['dva', 'Peut protéger un allié ciblé et suivre rapidement le flanqueur.'],
-                ['orisa', 'Peut gêner une approche frontale et punir un adversaire qui s’expose.'],
-                ['junker-queen', 'Peut soutenir un duel rapproché et aider à garder l’équipe groupée.'],
-            ],
-            'damage' => [
-                ['mei', 'Peut ralentir une approche et couper une route avec son mur.'],
-                ['torbjorn', 'Sa tourelle ajoute une alerte et une pression sur les angles répétés.'],
-                ['cassidy', 'Peut tenir une ligne proche et menacer un flanqueur qui s’engage sans ressources.'],
-            ],
-            'support' => [
-                ['brigitte', 'Peut rester près de la cible menacée et décourager une approche directe.'],
-                ['moira', 'Peut échapper à une partie de la pression et riposter à courte portée.'],
-                ['kiriko', 'Peut rejoindre un allié isolé et aider à traverser une fenêtre de burst.'],
-            ],
-        ],
-        'frontline' => [
-            'tank' => [
-                ['dva', 'Peut changer d’angle rapidement et contester les positions qui soutiennent la ligne de front.'],
-                ['winston', 'Peut ignorer une partie de la ligne frontale pour atteindre les soutiens ou les angles arrière.'],
-                ['sigma', 'Peut opposer une pression à distance si le combat se joue sur une ligne de tir.'],
-            ],
-            'damage' => [
-                ['pharah', 'Peut contourner une défense frontale en attaquant depuis un angle vertical.'],
-                ['echo', 'Peut exploiter la verticalité pour atteindre des cibles derrière la ligne de front.'],
-                ['mei', 'Peut couper temporairement une ligne de front et isoler une cible si le mur est bien placé.'],
-            ],
-            'support' => [
-                ['ana', 'Peut gêner une avancée groupée avec sa grenade et soutenir à distance.'],
-                ['zenyatta', 'Peut aider l’équipe à concentrer ses dégâts sur une cible exposée.'],
-                ['baptiste', 'Peut soutenir une position défensive et contribuer aux dégâts à distance.'],
-            ],
-        ],
-        'poke' => [
-            'tank' => [
-                ['winston', 'Peut fermer rapidement la distance et forcer les tireurs à abandonner leur position.'],
-                ['dva', 'Peut atteindre un angle isolé et couvrir l’équipe pendant la rotation.'],
-                ['doomfist', 'Peut créer une entrée rapide sur une position arrière mal protégée.'],
-            ],
-            'damage' => [
-                ['tracer', 'Peut contourner les lignes de tir et obliger les tireurs à se retourner.'],
-                ['genji', 'Peut utiliser les hauteurs et les angles latéraux pour mettre la pression sur les tireurs.'],
-                ['venture', 'Peut contourner une ligne de tir et menacer une position isolée.'],
-            ],
-            'support' => [
-                ['lucio', 'Peut accélérer une traversée entre les couvertures et réduire le temps passé sous le feu.'],
-                ['kiriko', 'Peut accompagner une rotation et rejoindre une cible qui s’est engagée.'],
-                ['moira', 'Peut traverser une ligne de tir avec son évasion et soutenir une entrée rapprochée.'],
-            ],
-        ],
-        'sniper' => [
-            'tank' => [
-                ['winston', 'Peut contester une hauteur et obliger le tireur à changer de position.'],
-                ['dva', 'Peut approcher rapidement et aider son équipe à traverser une ligne de tir.'],
-                ['doomfist', 'Peut atteindre une position isolée et perturber le tir à longue portée.'],
-            ],
-            'damage' => [
-                ['tracer', 'Peut attaquer par les côtés et forcer le tireur à interrompre sa visée.'],
-                ['genji', 'Peut exploiter les hauteurs pour réduire l’espace de sécurité du tireur.'],
-                ['venture', 'Peut forcer le tireur à abandonner une position isolée en attaquant par un angle latéral.'],
-            ],
-            'support' => [
-                ['lucio', 'Peut accélérer l’équipe d’une couverture à l’autre pour réduire l’exposition.'],
-                ['kiriko', 'Peut accompagner un coéquipier qui traverse une ligne de tir ou engage le tireur.'],
-                ['brigitte', 'Peut sécuriser les alliés proches quand le tireur est contesté par un flanqueur.'],
-            ],
-        ],
-        'support' => [
-            'tank' => [
-                ['winston', 'Peut mettre la pression sur la ligne arrière et obliger les soutiens à se séparer.'],
-                ['dva', 'Peut poursuivre un soutien isolé tout en protégeant ses alliés des tirs.'],
-                ['doomfist', 'Peut déplacer un soutien et perturber la formation adverse.'],
-            ],
-            'damage' => [
-                ['tracer', 'Peut user les ressources défensives du soutien en attaquant depuis plusieurs angles.'],
-                ['sombra', 'Peut perturber le plan de jeu du soutien et ouvrir une fenêtre à son équipe.'],
-                ['genji', 'Peut suivre un soutien qui tente de fuir et menacer les positions en hauteur.'],
-            ],
-            'support' => [
-                ['brigitte', 'Peut protéger ses propres soutiens contre une pression similaire.'],
-                ['ana', 'Peut réduire la valeur d’un soin adverse si sa grenade touche au bon moment.'],
-                ['zenyatta', 'Peut aider l’équipe à concentrer ses dégâts sur une cible exposée.'],
+            'difficult' => [
+                ['circuit-royal', 'Certaines traversées sont très exposées et offrent peu d’approches sûres avant d’atteindre les positions en hauteur.'],
+                ['havana', 'Les longues lignes dégagées peuvent révéler une approche avant que les héros mobiles aient atteint leur cible.'],
+                ['esperanca', 'Les grandes places et les longues rues exposent les engagements si l’équipe ne coordonne pas ses couvertures.'],
             ],
         ],
     ];
@@ -293,10 +161,18 @@ final class CounterwatchGuide
     /**
      * @param  array<string, mixed>  $hero
      * @param  list<array<string, mixed>>  $roster
+     * @param  list<array<string, mixed>>  $maps
+     * @param  list<array<string, mixed>>  $matchups
+     * @param  array<string, array{winrate: float, pickrate: float|null}>  $heroStats
      * @return array<string, mixed>
      */
-    public function heroGuide(array $hero, array $roster): array
-    {
+    public function heroGuide(
+        array $hero,
+        array $roster,
+        array $maps = [],
+        array $matchups = [],
+        array $heroStats = [],
+    ): array {
         $key = is_string($hero['key'] ?? null) ? $hero['key'] : '';
         $role = is_string($hero['role'] ?? null) ? $hero['role'] : '';
         $subrole = is_string($hero['subrole'] ?? null) ? $hero['subrole'] : '';
@@ -310,11 +186,23 @@ final class CounterwatchGuide
             }
         }
 
-        $counters = [];
+        $counters = [
+            'tank' => [],
+            'damage' => [],
+            'support' => [],
+        ];
         foreach (['tank', 'damage', 'support'] as $counterRole) {
             $counters[$counterRole] = [];
 
-            foreach (self::COUNTERS[$profile['group']][$counterRole] as [$candidateKey, $reason]) {
+            foreach ($matchups as $matchup) {
+                if (($matchup['target_archetype'] ?? null) !== $profile['group']
+                    || ($matchup['role'] ?? null) !== $counterRole
+                    || ! is_string($matchup['counter_hero_key'] ?? null)
+                    || ! is_string($matchup['reason'] ?? null)) {
+                    continue;
+                }
+
+                $candidateKey = $matchup['counter_hero_key'];
                 if ($candidateKey === $key || ! isset($rosterByKey[$candidateKey])) {
                     continue;
                 }
@@ -327,9 +215,29 @@ final class CounterwatchGuide
                 $counters[$counterRole][] = [
                     'key' => $candidateKey,
                     'name' => $candidate['name'],
-                    'reason' => $reason,
+                    'reason' => $matchup['reason'],
+                    'winrate' => $heroStats[$candidateKey]['winrate'] ?? null,
+                    'winrateDifference' => isset($heroStats[$candidateKey]['winrate'], $heroStats[$key]['winrate'])
+                        ? round($heroStats[$candidateKey]['winrate'] - $heroStats[$key]['winrate'], 1)
+                        : null,
                 ];
             }
+
+            usort($counters[$counterRole], static function (array $first, array $second): int {
+                if ($first['winrate'] === $second['winrate']) {
+                    return 0;
+                }
+
+                if ($first['winrate'] === null) {
+                    return 1;
+                }
+
+                if ($second['winrate'] === null) {
+                    return -1;
+                }
+
+                return $second['winrate'] <=> $first['winrate'];
+            });
         }
 
         return [
@@ -340,8 +248,40 @@ final class CounterwatchGuide
             'strengths' => $notes['strengths'],
             'weaknesses' => $notes['weaknesses'],
             'counters' => $counters,
+            'maps' => $this->mapGuide($profile, $maps),
             'confidence' => isset(self::HERO_PROFILES[$key]) ? 'curated' : 'inferred',
         ];
+    }
+
+    /**
+     * @return list<array{target_archetype: string, role: string, counter_hero_key: string, priority: int, reason: string}>
+     */
+    public function matchups(): array
+    {
+        $records = CounterwatchMatchup::query()
+            ->orderBy('target_archetype')
+            ->orderBy('role')
+            ->orderBy('priority')
+            ->get([
+                'target_archetype',
+                'role',
+                'counter_hero_key',
+                'priority',
+                'reason',
+            ]);
+        $matchups = [];
+
+        foreach ($records as $record) {
+            $matchups[] = [
+                'target_archetype' => (string) $record->target_archetype,
+                'role' => (string) $record->role,
+                'counter_hero_key' => (string) $record->counter_hero_key,
+                'priority' => (int) $record->priority,
+                'reason' => (string) $record->reason,
+            ];
+        }
+
+        return $matchups;
     }
 
     /**
@@ -351,8 +291,8 @@ final class CounterwatchGuide
     {
         return [
             'cycle' => [
-                ['key' => 'poke', 'label' => 'Poke', 'beats' => 'brawl', 'description' => 'Use la composition Brawl/Rush à distance avant qu’elle ne puisse engager.'],
-                ['key' => 'brawl', 'label' => 'Brawl / Rush', 'beats' => 'dive', 'description' => 'Le groupe compact protège sa ligne arrière et punit les plongeurs au contact.'],
+                ['key' => 'poke', 'label' => 'Poke', 'beats' => 'brawl', 'description' => 'Use la composition Brawl à distance avant qu’elle ne puisse engager.'],
+                ['key' => 'brawl', 'label' => 'Brawl', 'beats' => 'dive', 'description' => 'Le groupe compact protège sa ligne arrière et punit les héros Dive au contact.'],
                 ['key' => 'dive', 'label' => 'Dive', 'beats' => 'poke', 'description' => 'La mobilité ferme la distance et conteste les positions de tir isolées.'],
             ],
             'caveat' => 'Ce cycle décrit des tendances, pas une règle garantie. La carte, les perks, les temps de recharge, les angles et la coordination peuvent renverser un matchup.',
@@ -362,11 +302,55 @@ final class CounterwatchGuide
     private function styleLabel(string $style): string
     {
         return match ($style) {
-            'brawl' => 'Brawl / Rush',
+            'brawl' => 'Brawl',
             'dive' => 'Dive',
             'poke' => 'Poke',
             default => 'Hybride',
         };
+    }
+
+    /**
+     * @param  array{styles: list<string>, group: string}  $profile
+     * @param  list<array<string, mixed>>  $maps
+     * @return array{favorable: list<array{key: string, name: string, reason: string}>, difficult: list<array{key: string, name: string, reason: string}>}
+     */
+    private function mapGuide(array $profile, array $maps): array
+    {
+        $family = match ($profile['group']) {
+            'air', 'backline', 'poke', 'sniper' => 'sightline',
+            'brawl', 'deployable', 'frontline' => 'close',
+            'support' => in_array('brawl', $profile['styles'], true) ? 'close' : 'vertical',
+            default => 'vertical',
+        };
+        $mapsByKey = [];
+
+        foreach ($maps as $map) {
+            if (is_string($map['key'] ?? null)
+                && is_string($map['name'] ?? null)
+                && is_array($map['uses'] ?? null)
+                && in_array('standard', $map['uses'], true)) {
+                $mapsByKey[$map['key']] = $map;
+            }
+        }
+
+        $recommendations = [];
+        foreach (['favorable', 'difficult'] as $rating) {
+            $recommendations[$rating] = [];
+
+            foreach (self::MAP_GUIDES[$family][$rating] as [$mapKey, $reason]) {
+                if (! isset($mapsByKey[$mapKey])) {
+                    continue;
+                }
+
+                $recommendations[$rating][] = [
+                    'key' => $mapKey,
+                    'name' => $mapsByKey[$mapKey]['name'],
+                    'reason' => $reason,
+                ];
+            }
+        }
+
+        return $recommendations;
     }
 
     /**

@@ -112,6 +112,43 @@ class OverfastService
     }
 
     /**
+     * @return list<array<string, mixed>>
+     *
+     * @throws ConnectionException
+     * @throws OverfastProfileNotFoundException
+     */
+    public function maps(): array
+    {
+        return $this->getList('/maps');
+    }
+
+    /**
+     * @return list<array<string, mixed>>
+     *
+     * @throws ConnectionException
+     * @throws OverfastProfileNotFoundException
+     */
+    public function heroStats(
+        string $platform,
+        string $gamemode,
+        string $region,
+        ?string $map = null,
+    ): array {
+        $query = [
+            'platform' => $platform,
+            'gamemode' => $gamemode,
+            'region' => $region,
+            'order_by' => 'winrate:desc',
+        ];
+
+        if ($map !== null) {
+            $query['map'] = $map;
+        }
+
+        return $this->getList('/heroes/stats', $query);
+    }
+
+    /**
      * @return array<string, mixed>
      *
      * @throws ConnectionException
