@@ -2,7 +2,7 @@
 
 namespace App\Services;
 
-use App\Models\CounterwatchMatchup;
+use App\Models\HeroMatchup;
 
 final class CounterwatchGuide
 {
@@ -194,16 +194,27 @@ final class CounterwatchGuide
         foreach (['tank', 'damage', 'support'] as $counterRole) {
             $counters[$counterRole] = [];
 
+            $candidateScores = [];
             foreach ($matchups as $matchup) {
-                if (($matchup['target_archetype'] ?? null) !== $profile['group']
-                    || ($matchup['role'] ?? null) !== $counterRole
-                    || ! is_string($matchup['counter_hero_key'] ?? null)
-                    || ! is_string($matchup['reason'] ?? null)) {
+                if (($matchup['relation_type'] ?? null) !== 'counter'
+                    || ! is_string($matchup['hero_id'] ?? null)
+                    || ! is_string($matchup['target_hero_id'] ?? null)
+                    || ! is_numeric($matchup['score'] ?? null)) {
                     continue;
                 }
 
-                $candidateKey = $matchup['counter_hero_key'];
-                if ($candidateKey === $key || ! isset($rosterByKey[$candidateKey])) {
+                $score = (int) $matchup['score'];
+                $candidateKey = null;
+                if ($matchup['target_hero_id'] === $key && $score > 0) {
+                    $candidateKey = $matchup['hero_id'];
+                } elseif ($matchup['hero_id'] === $key && $score < 0) {
+                    $candidateKey = $matchup['target_hero_id'];
+                    $score = abs($score);
+                }
+
+                if ($candidateKey === null
+                    || $candidateKey === $key
+                    || ! isset($rosterByKey[$candidateKey])) {
                     continue;
                 }
 
@@ -212,10 +223,18 @@ final class CounterwatchGuide
                     continue;
                 }
 
+                $candidateScores[$candidateKey] = max(
+                    $candidateScores[$candidateKey] ?? 0,
+                    $score,
+                );
+            }
+
+            foreach ($candidateScores as $candidateKey => $score) {
+                $candidate = $rosterByKey[$candidateKey];
                 $counters[$counterRole][] = [
                     'key' => $candidateKey,
                     'name' => $candidate['name'],
-                    'reason' => $matchup['reason'],
+                    'score' => $score,
                     'winrate' => $heroStats[$candidateKey]['winrate'] ?? null,
                     'winrateDifference' => isset($heroStats[$candidateKey]['winrate'], $heroStats[$key]['winrate'])
                         ? round($heroStats[$candidateKey]['winrate'] - $heroStats[$key]['winrate'], 1)
@@ -224,8 +243,12 @@ final class CounterwatchGuide
             }
 
             usort($counters[$counterRole], static function (array $first, array $second): int {
+                if ($first['score'] !== $second['score']) {
+                    return $second['score'] <=> $first['score'];
+                }
+
                 if ($first['winrate'] === $second['winrate']) {
-                    return 0;
+                    return strcmp($first['name'], $second['name']);
                 }
 
                 if ($first['winrate'] === null) {
@@ -238,6 +261,7 @@ final class CounterwatchGuide
 
                 return $second['winrate'] <=> $first['winrate'];
             });
+            $counters[$counterRole] = array_slice($counters[$counterRole], 0, 3);
         }
 
         return [
@@ -254,30 +278,28 @@ final class CounterwatchGuide
     }
 
     /**
-     * @return list<array{target_archetype: string, role: string, counter_hero_key: string, priority: int, reason: string}>
+     * @return list<array{hero_id: string, target_hero_id: string, relation_type: string, score: int}>
      */
     public function matchups(): array
     {
-        $records = CounterwatchMatchup::query()
-            ->orderBy('target_archetype')
-            ->orderBy('role')
-            ->orderBy('priority')
+        $records = HeroMatchup::query()
+            ->orderBy('target_hero_id')
+            ->orderBy('relation_type')
+            ->orderBy('hero_id')
             ->get([
-                'target_archetype',
-                'role',
-                'counter_hero_key',
-                'priority',
-                'reason',
+                'hero_id',
+                'target_hero_id',
+                'relation_type',
+                'score',
             ]);
         $matchups = [];
 
         foreach ($records as $record) {
             $matchups[] = [
-                'target_archetype' => (string) $record->target_archetype,
-                'role' => (string) $record->role,
-                'counter_hero_key' => (string) $record->counter_hero_key,
-                'priority' => (int) $record->priority,
-                'reason' => (string) $record->reason,
+                'hero_id' => (string) $record->hero_id,
+                'target_hero_id' => (string) $record->target_hero_id,
+                'relation_type' => (string) $record->relation_type,
+                'score' => (int) $record->score,
             ];
         }
 

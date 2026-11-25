@@ -62,18 +62,34 @@ test('authenticated users can browse heroes and role-specific matchup suggestion
             ->has('heroes', 10)
             ->where('heroes.0.key', 'ana')
             ->where('heroes.0.guide.styles.0.label', 'Poke')
-            ->has('heroes.0.guide.counters.tank', 3)
-            ->has('heroes.0.guide.counters.damage', 3)
-            ->has('heroes.0.guide.counters.support', 3)
+            ->has('heroes.0.guide.counters.tank', 1)
+            ->has('heroes.0.guide.counters.damage', 1)
+            ->has('heroes.0.guide.counters.support', 1)
             ->has('heroes.0.guide.maps.favorable', 3)
             ->has('heroes.0.guide.maps.difficult', 3)
             ->where('tierList.0.key', 'doomfist')
             ->where('tierList.0.winrate', 54)
-            ->where('heroes.0.guide.counters.tank.0.key', 'doomfist')
-            ->where('heroes.0.guide.counters.tank.0.winrateDifference', 4)
+            ->where('heroes.0.guide.counters.tank.0.key', 'winston')
+            ->where('heroes.0.guide.counters.tank.0.score', 1)
+            ->where('heroes.0.guide.counters.tank.0.winrateDifference', 2)
+            ->where('heroes.0.guide.counters.damage.0.key', 'tracer')
+            ->where('heroes.0.guide.counters.support.0.key', 'kiriko')
             ->where('compositionGuide.cycle.0.beats', 'brawl')
             ->where('catalogError', null),
         );
+
+    $this->assertDatabaseHas('hero_matchups', [
+        'hero_id' => 'winston',
+        'target_hero_id' => 'bastion',
+        'relation_type' => 'counter',
+        'score' => -2,
+    ]);
+    $this->assertDatabaseHas('hero_matchups', [
+        'hero_id' => 'winston',
+        'target_hero_id' => 'tracer',
+        'relation_type' => 'synergy',
+        'score' => 2,
+    ]);
 
     Http::assertSent(fn (Request $request): bool => str_ends_with(
         $request->url(),
@@ -160,39 +176,81 @@ test('the hero guide remains available when OverFast statistics fail', function 
         );
 });
 
-test('map-specific winrates reorder matchup suggestions and the tier list', function () {
+test('bastion matchup suggestions do not mistake negative relations for counters', function () {
     Cache::flush();
     Http::fake(function (Request $request) {
         return match (parse_url($request->url(), PHP_URL_PATH)) {
             '/heroes' => Http::response([
-                ['key' => 'ana', 'name' => 'Ana', 'role' => 'support', 'subrole' => 'tactician'],
+                ['key' => 'bastion', 'name' => 'Bastion', 'role' => 'damage'],
                 ['key' => 'winston', 'name' => 'Winston', 'role' => 'tank'],
-                ['key' => 'dva', 'name' => 'D.Va', 'role' => 'tank'],
-                ['key' => 'doomfist', 'name' => 'Doomfist', 'role' => 'tank'],
+                ['key' => 'sigma', 'name' => 'Sigma', 'role' => 'tank'],
+                ['key' => 'genji', 'name' => 'Genji', 'role' => 'damage'],
+                ['key' => 'ana', 'name' => 'Ana', 'role' => 'support'],
             ]),
-            '/maps' => Http::response([
-                ['key' => 'circuit-royal', 'name' => 'Circuit Royal', 'uses' => ['standard']],
-            ]),
+            '/maps' => Http::response([]),
             '/heroes/stats' => Http::response([
-                ['hero' => 'dva', 'winrate' => 55.0, 'pickrate' => 8.0],
-                ['hero' => 'doomfist', 'winrate' => 53.0, 'pickrate' => 6.0],
+                ['hero' => 'bastion', 'winrate' => 50.0, 'pickrate' => 8.0],
+                ['hero' => 'winston', 'winrate' => 52.0, 'pickrate' => 6.0],
+                ['hero' => 'sigma', 'winrate' => 51.0, 'pickrate' => 5.0],
+                ['hero' => 'genji', 'winrate' => 49.0, 'pickrate' => 12.0],
                 ['hero' => 'ana', 'winrate' => 50.0, 'pickrate' => 20.0],
-                ['hero' => 'winston', 'winrate' => 48.0, 'pickrate' => 7.0],
             ]),
             default => Http::response([], 404),
         };
     });
 
     $this->actingAs(User::factory()->create())
-        ->get(route('counterwatch', ['map' => 'circuit-royal', 'hero' => 'ana']))
+        ->get(route('counterwatch', ['hero' => 'bastion']))
+        ->assertOk()
+        ->assertInertia(fn (Assert $page) => $page
+            ->where('selectedHeroKey', 'bastion')
+            ->has('heroes.0.guide.counters.tank', 1)
+            ->where('heroes.0.guide.counters.tank.0.key', 'sigma')
+            ->where('heroes.0.guide.counters.tank.0.score', 2)
+            ->has('heroes.0.guide.counters.damage', 1)
+            ->where('heroes.0.guide.counters.damage.0.key', 'genji')
+            ->has('heroes.0.guide.counters.support', 1)
+            ->where('heroes.0.guide.counters.support.0.key', 'ana'),
+        );
+});
+
+test('map-specific winrates break ties between equally rated matchup suggestions', function () {
+    Cache::flush();
+    Http::fake(function (Request $request) {
+        return match (parse_url($request->url(), PHP_URL_PATH)) {
+            '/heroes' => Http::response([
+                ['key' => 'pharah', 'name' => 'Pharah', 'role' => 'damage'],
+                ['key' => 'soldier-76', 'name' => 'Soldier: 76', 'role' => 'damage'],
+                ['key' => 'cassidy', 'name' => 'Cassidy', 'role' => 'damage'],
+                ['key' => 'ashe', 'name' => 'Ashe', 'role' => 'damage'],
+                ['key' => 'widowmaker', 'name' => 'Widowmaker', 'role' => 'damage'],
+            ]),
+            '/maps' => Http::response([
+                ['key' => 'circuit-royal', 'name' => 'Circuit Royal', 'uses' => ['standard']],
+            ]),
+            '/heroes/stats' => Http::response([
+                ['hero' => 'cassidy', 'winrate' => 57.0, 'pickrate' => 5.0],
+                ['hero' => 'widowmaker', 'winrate' => 56.0, 'pickrate' => 20.0],
+                ['hero' => 'soldier-76', 'winrate' => 55.0, 'pickrate' => 6.0],
+                ['hero' => 'ashe', 'winrate' => 53.0, 'pickrate' => 12.0],
+                ['hero' => 'pharah', 'winrate' => 50.0, 'pickrate' => 8.0],
+            ]),
+            default => Http::response([], 404),
+        };
+    });
+
+    $this->actingAs(User::factory()->create())
+        ->get(route('counterwatch', ['map' => 'circuit-royal', 'hero' => 'pharah']))
         ->assertOk()
         ->assertInertia(fn (Assert $page) => $page
             ->where('selectedMapKey', 'circuit-royal')
             ->where('selectedMapName', 'Circuit Royal')
-            ->where('selectedHeroKey', 'ana')
-            ->where('tierList.0.key', 'dva')
-            ->where('heroes.0.guide.counters.tank.0.key', 'dva')
-            ->where('heroes.0.guide.counters.tank.0.winrateDifference', 5),
+            ->where('selectedHeroKey', 'pharah')
+            ->where('tierList.0.key', 'cassidy')
+            ->where('heroes.0.guide.counters.damage.0.key', 'cassidy')
+            ->where('heroes.0.guide.counters.damage.0.winrateDifference', 7)
+            ->where('heroes.0.guide.counters.damage.1.key', 'widowmaker')
+            ->where('heroes.0.guide.counters.damage.2.key', 'soldier-76'),
         );
 
     Http::assertSent(fn (Request $request): bool => str_contains(

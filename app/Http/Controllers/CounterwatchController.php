@@ -178,7 +178,7 @@ class CounterwatchController extends Controller
             'selectedHeroKey' => $selectedHeroKey,
             'statsScope' => 'PC · compétitif · Europe · toutes divisions',
             'compositionGuide' => $this->guide->compositionGuide(),
-            'dataNotice' => 'Le roster, les statistiques et les cartes viennent d’OverFast. Les matchups OWGG sont des recommandations éditoriales et le winrate n’est pas un taux de victoire contre le héros sélectionné.',
+            'dataNotice' => 'Le roster, les statistiques et les cartes viennent d’OverFast. Les scores de matchup OWGG sont des indications initiales, pas des taux de victoire en duel.',
         ]);
     }
 }
