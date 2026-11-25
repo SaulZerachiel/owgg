@@ -11,6 +11,7 @@ final class CoachSkillRegistry
         'progression' => 'progression.md',
         'role' => 'role-and-rank.md',
         'hero' => 'hero-analysis.md',
+        'perks' => 'perks-and-matchups.md',
     ];
 
     public function instructions(): string

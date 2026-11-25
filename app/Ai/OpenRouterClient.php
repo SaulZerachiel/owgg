@@ -19,8 +19,8 @@ final class OpenRouterClient implements AiClient
                 ->post('/chat/completions', [
                     'model' => config('services.openrouter.model'),
                     'messages' => $messages,
-                    // Cette limite protège le petit crédit disponible contre les réponses trop longues.
-                    'max_tokens' => 800,
+                    // Cette limite configurable laisse de la place aux conseils tactiques sans imposer des réponses longues.
+                    'max_tokens' => (int) config('services.openrouter.max_tokens', 1200),
                     'provider' => [
                         // OpenRouter doit sélectionner un fournisseur sans conservation des données.
                         'zdr' => true,
