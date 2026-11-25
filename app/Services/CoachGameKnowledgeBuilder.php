@@ -77,6 +77,7 @@ final class CoachGameKnowledgeBuilder
         }
 
         $matchups = $matchedHeroes !== [] ? $this->counterwatch->matchups() : [];
+        $archetypeMatchups = $matchedHeroes !== [] ? $this->counterwatch->archetypeMatchups() : [];
         $knowledge = [];
         $unavailableHeroes = [];
 
@@ -120,6 +121,8 @@ final class CoachGameKnowledgeBuilder
                     $catalog['heroes'],
                     $maps,
                     $matchups,
+                    [],
+                    $archetypeMatchups,
                 ),
             ];
         }
@@ -128,7 +131,7 @@ final class CoachGameKnowledgeBuilder
             .'Les Perks standard et les pouvoirs Stadium sont deux systèmes distincts. '
             .'Les fiches donnent les capacités et Perks actuels, pas toutes les interactions cachées : '
             .'distingue les faits de fiche de tes déductions tactiques, et signale les interactions dépendantes du patch. '
-            .'Les scores de matchup Counterwatch proviennent d’une base initiale OWGG : ce sont des indications éditoriales, pas des statistiques de duel ni des certitudes; '
+            .'Les matchups Counterwatch combinent des relations héros-à-héros et des pistes liées au style de jeu : ce sont des indications éditoriales, pas des statistiques de duel ni des certitudes; '
             .'les affinités de carte reposent sur la géométrie des lieux et restent subjectives. '
             .'Conserve les noms Brawl, Dive et Poke : ne traduis pas Dive par « plongée » ou « plongeur », '
             .'et n’ajoute pas « Rush » après Brawl. '

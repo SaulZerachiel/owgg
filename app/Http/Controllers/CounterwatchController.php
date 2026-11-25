@@ -132,6 +132,7 @@ class CounterwatchController extends Controller
         }
 
         $matchups = $roster !== [] ? $this->guide->matchups() : [];
+        $archetypeMatchups = $roster !== [] ? $this->guide->archetypeMatchups() : [];
         $requestedHero = $request->query('hero');
         $selectedHeroKey = is_string($requestedHero) && isset($rosterByKey[$requestedHero])
                 ? $requestedHero
@@ -150,6 +151,7 @@ class CounterwatchController extends Controller
                         $maps,
                         $matchups,
                         $heroStatsByKey,
+                        $archetypeMatchups,
                     ),
                 ],
                 $roster,
@@ -178,7 +180,7 @@ class CounterwatchController extends Controller
             'selectedHeroKey' => $selectedHeroKey,
             'statsScope' => 'PC · compétitif · Europe · toutes divisions',
             'compositionGuide' => $this->guide->compositionGuide(),
-            'dataNotice' => 'Le roster, les statistiques et les cartes viennent d’OverFast. Les scores de matchup OWGG sont des indications initiales, pas des taux de victoire en duel.',
+            'dataNotice' => 'Le roster, les statistiques et les cartes viennent d’OverFast. Les suggestions de matchup OWGG ne sont pas des taux de victoire en duel.',
         ]);
     }
 }
