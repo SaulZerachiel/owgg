@@ -61,7 +61,10 @@ test('the coach receives current abilities and perks for heroes in the conversat
         ->toContain('"name":"Ice Wall"')
         ->toContain('"name":"EMP"')
         ->toContain('"name":"Skating Rink"')
-        ->toContain('"name":"Cryo-Storm"');
+        ->toContain('"name":"Cryo-Storm"')
+        ->toContain('"counterwatch_guide"')
+        ->toContain('"composition_guide"')
+        ->toContain('"key":"brawl"');
 
     Http::assertSentCount(3);
     Http::assertSent(fn (Request $request): bool => str_ends_with($request->url(), '/heroes?locale=fr-fr'));

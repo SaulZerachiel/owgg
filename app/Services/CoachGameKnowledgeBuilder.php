@@ -18,7 +18,10 @@ final class CoachGameKnowledgeBuilder
 
     private const CACHE_TTL_HOURS = 6;
 
-    public function __construct(private readonly OverfastService $overfast) {}
+    public function __construct(
+        private readonly OverfastService $overfast,
+        private readonly CounterwatchGuide $counterwatch,
+    ) {}
 
     /**
      * @param  array<int, array{role: string, content: string}>  $history
@@ -94,17 +97,21 @@ final class CoachGameKnowledgeBuilder
             $knowledge[] = [
                 'fetched_at' => $heroData['fetched_at'],
                 ...$this->relevantDetails($heroData['data']),
+                'counterwatch_guide' => $this->counterwatch->heroGuide($hero, $catalog['heroes']),
             ];
         }
 
         return 'Référence de jeu actualisée pour les héros évoqués (OverFast, fiches Blizzard; cache de six heures). '
             .'Les Perks standard et les pouvoirs Stadium sont deux systèmes distincts. '
             .'Les fiches donnent les capacités et Perks actuels, pas toutes les interactions cachées : '
-            ."distingue les faits de fiche de tes déductions tactiques, et signale les interactions dépendantes du patch.\n"
+            .'distingue les faits de fiche de tes déductions tactiques, et signale les interactions dépendantes du patch. '
+            .'Les conseils Counterwatch sont des pistes tactiques OWGG, pas des statistiques de victoire ni un classement universel; '
+            ."nuance-les selon la carte, les compositions, les perks et l’exécution.\n"
             .'Données : '.json_encode([
                 'heroes' => $knowledge,
                 'hero_data_unavailable' => $unavailableHeroes,
                 'catalog_fetched_at' => $catalog['fetched_at'],
+                'composition_guide' => $this->counterwatch->compositionGuide(),
             ], JSON_THROW_ON_ERROR | JSON_UNESCAPED_UNICODE | JSON_PRESERVE_ZERO_FRACTION);
     }
 
