@@ -112,7 +112,7 @@ defineProps<{
 
 .auth-eyebrow,
 .auth-footer {
-    color: var(--ow-orange);
+    color: var(--ow-orange-text);
     font-size: 0.62rem;
     font-weight: 800;
     letter-spacing: 0.16em;

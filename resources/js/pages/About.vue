@@ -119,7 +119,7 @@ import { Head } from '@inertiajs/vue3';
 
 .eyebrow,
 .flow-kicker {
-    color: var(--orange);
+    color: var(--ow-orange-text);
     font-size: 0.66rem;
     letter-spacing: 0.18em;
 }
@@ -141,7 +141,7 @@ h1 {
 
 h1 strong,
 .about-values strong {
-    color: var(--orange);
+    color: var(--ow-orange-text);
 }
 
 .about-heading > p:last-child {
@@ -225,7 +225,7 @@ h1 strong,
 }
 
 .flow-icon-data {
-    --icon-color: var(--ow-orange);
+    --icon-color: var(--ow-orange-text);
 }
 
 .flow-icon-coach {
@@ -288,7 +288,7 @@ h1 strong,
 
 .value-list span {
     margin-right: 8px;
-    color: var(--orange);
+    color: var(--ow-orange-text);
     font-size: 0.55rem;
 }
 

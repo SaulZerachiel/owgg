@@ -1,6 +1,7 @@
 <script setup lang="ts">
 import { computed } from 'vue';
 import { formatStatLabel } from '@/lib/formatStatLabel';
+import { isAvailableStatValue } from '@/lib/isAvailableStatValue';
 
 type MetricValue = number | string | boolean | null;
 
@@ -9,17 +10,19 @@ const props = defineProps<{
 }>();
 
 const rows = computed(() =>
-    Object.entries(props.metrics).map(([key, value]) => {
-        const statLabel = formatStatLabel(key);
+    Object.entries(props.metrics)
+        .filter(([, value]) => isAvailableStatValue(value))
+        .map(([key, value]) => {
+            const statLabel = formatStatLabel(key);
 
-        return {
-            key,
-            label: [statLabel.label, statLabel.qualifier]
-                .filter(Boolean)
-                .join(' · '),
-            value: formatValue(key, value),
-        };
-    }),
+            return {
+                key,
+                label: [statLabel.label, statLabel.qualifier]
+                    .filter(Boolean)
+                    .join(' · '),
+                value: formatValue(key, value),
+            };
+        }),
 );
 
 function formatValue(key: string, value: MetricValue): string {

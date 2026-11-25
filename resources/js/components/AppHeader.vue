@@ -272,7 +272,7 @@ const navItems = computed<NavItem[]>(() => {
 
 .owgg-avatar-fallback {
     background: var(--ow-orange);
-    color: var(--bg-0);
+    color: var(--text-on-accent);
     font-weight: 900;
 }
 

@@ -16,6 +16,7 @@ const tabs = [
         <button
             v-for="{ value, Icon, label } in tabs"
             :key="value"
+            type="button"
             @click="updateAppearance(value)"
             :aria-pressed="appearance === value"
             :class="{ 'is-active': appearance === value }"
@@ -62,7 +63,7 @@ const tabs = [
 
 .appearance-tabs button.is-active {
     background: var(--ow-orange);
-    color: var(--bg-0);
+    color: var(--text-on-accent);
 }
 
 .appearance-tabs button:active {

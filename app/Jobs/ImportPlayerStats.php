@@ -21,6 +21,7 @@ use Illuminate\Database\Eloquent\Model;
 use Illuminate\Foundation\Bus\Dispatchable;
 use Illuminate\Queue\InteractsWithQueue;
 use Illuminate\Queue\SerializesModels;
+use Illuminate\Support\Facades\Cache;
 use Illuminate\Support\Facades\DB;
 use Illuminate\Support\Facades\Log;
 use Illuminate\Support\Str;
@@ -45,6 +46,11 @@ class ImportPlayerStats implements ShouldBeUnique, ShouldQueue
     public function uniqueId(): string
     {
         return (string) $this->user->getKey();
+    }
+
+    public static function syncStatusCacheKey(int|string $userId): string
+    {
+        return 'player-stats-sync:'.$userId;
     }
 
     public function handle(OverfastService $overfast, PlayerStatsSnapshotService $snapshots): void
@@ -114,6 +120,7 @@ class ImportPlayerStats implements ShouldBeUnique, ShouldQueue
                 HeroStats::class,
             );
 
+            HeroSpecificStat::query()->where('player_id', $playerId)->delete();
             $this->upsertGrouped(
                 $this->heroSpecificStatRows($playerId, $careerStats, $heroIds),
                 ['hero_id', 'player_id', 'stat_key'],
@@ -124,6 +131,8 @@ class ImportPlayerStats implements ShouldBeUnique, ShouldQueue
             $this->user->forceFill(['stats_synced_at' => now()])->save();
             $snapshots->capture(Profile::query()->whereKey($playerId)->firstOrFail());
         });
+
+        Cache::forget(self::syncStatusCacheKey($this->user->getKey()));
     }
 
     /**
@@ -310,6 +319,10 @@ class ImportPlayerStats implements ShouldBeUnique, ShouldQueue
                     throw new UnexpectedValueException('OverFast returned an invalid hero-specific statistic.');
                 }
 
+                if ($this->isUnavailableHeroSpecificValue($value)) {
+                    continue;
+                }
+
                 $rows[] = [
                     'hero_id' => $heroId,
                     'player_id' => $playerId,
@@ -329,7 +342,10 @@ class ImportPlayerStats implements ShouldBeUnique, ShouldQueue
     private function summaryMetrics(array $summary, Model $model): array
     {
         $fillable = $model->getFillable();
-        $metrics = [];
+        $metrics = array_fill_keys(
+            array_diff($fillable, ['player_id', 'hero_id', 'role_id', 'roles_stats_id']),
+            null,
+        );
 
         foreach (['games_played', 'games_won', 'games_lost', 'time_played', 'kda'] as $key) {
             if (array_key_exists($key, $summary) && in_array($key, $fillable, true)) {
@@ -397,6 +413,19 @@ class ImportPlayerStats implements ShouldBeUnique, ShouldQueue
         }
 
         return $metrics;
+    }
+
+    private function isUnavailableHeroSpecificValue(mixed $value): bool
+    {
+        if ($value === null) {
+            return true;
+        }
+
+        if (! is_string($value)) {
+            return false;
+        }
+
+        return in_array(mb_strtolower(trim($value)), ['/', '-', '—', '–', 'n/a'], true);
     }
 
     /**
@@ -472,6 +501,11 @@ class ImportPlayerStats implements ShouldBeUnique, ShouldQueue
 
     public function failed(?Throwable $exception): void
     {
+        Cache::put(
+            self::syncStatusCacheKey($this->user->getKey()),
+            'failed',
+            now()->addMinutes(10),
+        );
         Log::error('OverFast player stats import failed.', [
             'user_id' => $this->user->id,
             'exception' => $exception,
