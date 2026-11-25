@@ -4,6 +4,7 @@ import { computed, onMounted, onUnmounted, ref } from 'vue';
 import HeroSearchInput from '@/components/statistics/HeroSearchInput.vue';
 import MetricGrid from '@/components/statistics/MetricGrid.vue';
 import { formatStatLabel } from '@/lib/formatStatLabel';
+import { isAvailableStatValue } from '@/lib/isAvailableStatValue';
 
 type MetricValue = number | string | boolean | null;
 type MetricMap = Record<string, MetricValue>;
@@ -42,6 +43,8 @@ type HeroSpecificStat = {
 const props = defineProps<{
     playerId: string;
     syncing: boolean;
+    syncUrl: string;
+    statsSyncedAt: string | null;
     profile: PlayerProfile | null;
     ranks: Rank[];
     rolesStats: RoleStats[];
@@ -50,30 +53,48 @@ const props = defineProps<{
     heroSpecificStats: HeroSpecificStat[];
 }>();
 
+function hasAvailableMetrics(metrics: MetricMap): boolean {
+    return Object.values(metrics).some(isAvailableStatValue);
+}
+
 const isSyncing = ref(props.syncing);
 const heroSearch = ref('');
 const heroSpecificSearch = ref('');
+const availableHeroStats = computed(() =>
+    props.heroStats.filter((hero) => hasAvailableMetrics(hero.metrics)),
+);
+const availableRoleStats = computed(() =>
+    props.rolesStats.filter((role) => hasAvailableMetrics(role.metrics)),
+);
+const availableAllHeroesStats = computed(() =>
+    props.allHeroesStats && hasAvailableMetrics(props.allHeroesStats)
+        ? props.allHeroesStats
+        : null,
+);
+const availableHeroSpecificStats = computed(() =>
+    props.heroSpecificStats.filter((stat) => isAvailableStatValue(stat.value)),
+);
 const heroNames = computed(() =>
-    [...new Set(props.heroStats.map((hero) => hero.hero))].sort((a, b) =>
-        a.localeCompare(b),
+    [...new Set(availableHeroStats.value.map((hero) => hero.hero))].sort(
+        (a, b) => a.localeCompare(b),
     ),
 );
 const heroSpecificHeroNames = computed(() =>
-    [...new Set(props.heroSpecificStats.map((stat) => stat.hero))].sort(
-        (a, b) => a.localeCompare(b),
-    ),
+    [
+        ...new Set(availableHeroSpecificStats.value.map((stat) => stat.hero)),
+    ].sort((a, b) => a.localeCompare(b)),
 );
 function matchesHero(hero: string, query: string): boolean {
     return hero.toLocaleLowerCase().includes(query.trim().toLocaleLowerCase());
 }
 
 const filteredHeroStats = computed(() => {
-    return props.heroStats.filter((hero) =>
+    return availableHeroStats.value.filter((hero) =>
         matchesHero(hero.hero, heroSearch.value),
     );
 });
 const formattedHeroSpecificStats = computed(() =>
-    props.heroSpecificStats.map((stat, index) => ({
+    availableHeroSpecificStats.value.map((stat, index) => ({
         ...stat,
         ...formatStatLabel(stat.key),
         rowKey: `${stat.hero}-${stat.key}-${index}`,
@@ -96,8 +117,8 @@ const rankColors: Record<string, string> = {
 };
 let refreshTimer: ReturnType<typeof setInterval> | undefined;
 
-onMounted(() => {
-    if (!isSyncing.value) {
+function startPolling(): void {
+    if (refreshTimer) {
         return;
     }
 
@@ -108,6 +129,7 @@ onMounted(() => {
         router.reload({
             only: [
                 'syncing',
+                'statsSyncedAt',
                 'profile',
                 'ranks',
                 'rolesStats',
@@ -119,6 +141,7 @@ onMounted(() => {
                 if (!page.props.syncing) {
                     isSyncing.value = false;
                     clearInterval(refreshTimer);
+                    refreshTimer = undefined;
                 }
             },
         });
@@ -126,8 +149,15 @@ onMounted(() => {
         if (attempts >= 20) {
             isSyncing.value = false;
             clearInterval(refreshTimer);
+            refreshTimer = undefined;
         }
     }, 3000);
+}
+
+onMounted(() => {
+    if (isSyncing.value) {
+        startPolling();
+    }
 });
 
 onUnmounted(() => {
@@ -135,6 +165,29 @@ onUnmounted(() => {
         clearInterval(refreshTimer);
     }
 });
+
+function refreshStats(): void {
+    router.post(
+        props.syncUrl,
+        {},
+        {
+            preserveScroll: true,
+            onStart: () => {
+                isSyncing.value = true;
+            },
+            onSuccess: (page) => {
+                const syncing = page.props.syncing;
+                if (typeof syncing === 'boolean') {
+                    isSyncing.value = syncing;
+                }
+
+                if (isSyncing.value) {
+                    startPolling();
+                }
+            },
+        },
+    );
+}
 
 function updatedAt(value: string | null): string {
     if (!value) {
@@ -168,12 +221,26 @@ function rankColor(tier: string | null): string {
                     <h1>PLAYER <strong>STATISTICS</strong></h1>
                     <p class="player-id">{{ playerId }}</p>
                 </div>
-                <p v-if="profile" class="updated-at">
-                    UPDATED {{ updatedAt(profile.last_updated_at) }}
-                </p>
+                <div class="statistics-header-actions">
+                    <p v-if="statsSyncedAt" class="updated-at">
+                        SYNCED {{ updatedAt(statsSyncedAt) }}
+                    </p>
+                    <button
+                        type="button"
+                        class="refresh-button"
+                        :disabled="isSyncing"
+                        @click="refreshStats"
+                    >
+                        {{ isSyncing ? 'SYNCING...' : 'REFRESH STATS' }}
+                    </button>
+                </div>
             </header>
 
-            <section v-if="isSyncing" class="empty-state" role="status">
+            <section
+                v-if="isSyncing && !profile"
+                class="empty-state"
+                role="status"
+            >
                 <div class="sync-loader" aria-hidden="true"></div>
                 <div>
                     <p class="eyebrow">DATA LINK // OVERFAST</p>
@@ -196,6 +263,12 @@ function rankColor(tier: string | null): string {
             </section>
 
             <template v-else>
+                <p v-if="isSyncing" class="sync-notice" role="status">
+                    <span class="sync-loader" aria-hidden="true"></span>
+                    Refreshing statistics from OverFast. Existing values remain
+                    available.
+                </p>
+
                 <section class="profile-banner">
                     <img
                         v-if="profile.avatar"
@@ -288,11 +361,12 @@ function rankColor(tier: string | null): string {
                             No heroes match “{{ heroSearch }}”.
                         </p>
                         <MetricGrid
-                            v-else-if="allHeroesStats"
-                            :metrics="allHeroesStats"
+                            v-else-if="availableAllHeroesStats"
+                            :metrics="availableAllHeroesStats"
                         />
                         <p v-else class="empty-copy">
-                            No all-heroes statistics are stored yet.
+                            No all-heroes statistics are available from
+                            OverFast.
                         </p>
                     </div>
                 </section>
@@ -302,9 +376,9 @@ function rankColor(tier: string | null): string {
                         <p class="eyebrow">ROLE BREAKDOWN</p>
                         <h2>Roles</h2>
                     </div>
-                    <div v-if="rolesStats.length" class="role-grid">
+                    <div v-if="availableRoleStats.length" class="role-grid">
                         <article
-                            v-for="role in rolesStats"
+                            v-for="role in availableRoleStats"
                             :key="role.role"
                             class="data-card"
                             :data-role="role.role.toLowerCase()"
@@ -320,7 +394,7 @@ function rankColor(tier: string | null): string {
                         </article>
                     </div>
                     <p v-else class="empty-copy">
-                        No role statistics are stored yet.
+                        No role statistics are available from OverFast.
                     </p>
                 </section>
 
@@ -330,7 +404,7 @@ function rankColor(tier: string | null): string {
                         <h2>Additional Statistics</h2>
                     </div>
                     <div
-                        v-if="heroSpecificStats.length"
+                        v-if="availableHeroSpecificStats.length"
                         class="hero-statistics"
                     >
                         <HeroSearchInput
@@ -380,7 +454,7 @@ function rankColor(tier: string | null): string {
                         </p>
                     </div>
                     <p v-else class="empty-copy">
-                        No hero-specific statistics are stored yet.
+                        No hero-specific statistics are available from OverFast.
                     </p>
                 </section>
             </template>
@@ -437,9 +511,54 @@ function rankColor(tier: string | null): string {
     margin-bottom: 30px;
 }
 
+.statistics-header-actions {
+    display: flex;
+    align-items: center;
+    flex-wrap: wrap;
+    justify-content: flex-end;
+    gap: 12px;
+}
+
+.refresh-button {
+    min-height: 38px;
+    padding: 8px 16px;
+    border: 1px solid var(--ow-orange);
+    background: var(--ow-orange);
+    color: var(--bg-0);
+    clip-path: polygon(8px 0, 100% 0, calc(100% - 8px) 100%, 0 100%);
+    cursor: pointer;
+    font-family: var(--font-heading);
+    font-size: 0.72rem;
+    font-weight: 900;
+    letter-spacing: 0.08em;
+    transition:
+        transform 150ms cubic-bezier(0.2, 0.8, 0.2, 1),
+        box-shadow 150ms cubic-bezier(0.2, 0.8, 0.2, 1),
+        opacity 150ms cubic-bezier(0.2, 0.8, 0.2, 1);
+}
+
+.refresh-button:hover:not(:disabled) {
+    transform: translateY(-1px);
+    box-shadow: 0 0 16px rgb(249 158 26 / 35%);
+}
+
+.refresh-button:focus-visible {
+    outline: 2px solid var(--ow-orange);
+    outline-offset: 3px;
+}
+
+.refresh-button:active:not(:disabled) {
+    transform: scale(0.97);
+}
+
+.refresh-button:disabled {
+    cursor: wait;
+    opacity: 0.6;
+}
+
 .eyebrow {
     margin: 0 0 8px;
-    color: var(--orange);
+    color: var(--ow-orange-text);
     font-size: 0.68rem;
     font-weight: 800;
     letter-spacing: 0.18em;
@@ -464,7 +583,7 @@ h1 {
 }
 
 h1 strong {
-    color: var(--orange);
+    color: var(--ow-orange-text);
 }
 
 .player-id,
@@ -850,6 +969,23 @@ tbody tr:last-child td {
     line-height: 1.65;
 }
 
+.sync-notice {
+    display: flex;
+    align-items: center;
+    gap: 10px;
+    margin: 0 0 16px;
+    padding: 11px 15px;
+    border-left: 3px solid var(--ow-orange);
+    background: var(--bg-1);
+    color: var(--text-dim);
+    font-size: 0.8rem;
+}
+
+.sync-notice .sync-loader {
+    width: 20px;
+    height: 20px;
+}
+
 @keyframes statistics-enter {
     from {
         opacity: 0;
@@ -896,6 +1032,10 @@ tbody tr:last-child td {
         align-items: flex-start;
         flex-direction: column;
         gap: 12px;
+    }
+
+    .statistics-header-actions {
+        justify-content: flex-start;
     }
 
     .statistics-section,

@@ -155,7 +155,7 @@ import { dashboard, login, register } from '@/routes';
 
 .owgg-eyebrow {
     margin-bottom: 20px;
-    color: var(--orange);
+    color: var(--ow-orange-text);
     font-weight: 800;
 }
 
@@ -170,7 +170,7 @@ h1 {
 }
 
 h1 strong {
-    color: var(--orange);
+    color: var(--ow-orange-text);
 }
 
 .owgg-description {
@@ -198,7 +198,7 @@ h1 strong {
     position: relative;
     overflow: hidden;
     background: var(--orange);
-    color: var(--bg-0);
+    color: var(--text-on-accent);
     font-size: 0.9rem;
     font-weight: 900;
     letter-spacing: 0.05em;

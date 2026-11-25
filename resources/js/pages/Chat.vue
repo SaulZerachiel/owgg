@@ -302,7 +302,7 @@ async function sendMessage() {
 .conversation-kicker,
 .chat-kicker {
     margin: 0 0 7px;
-    color: var(--ow-orange);
+    color: var(--ow-orange-text);
     font-size: 0.62rem;
     font-weight: 800;
     letter-spacing: 0.16em;
@@ -327,7 +327,7 @@ async function sendMessage() {
     place-items: center;
     border: 1px solid color-mix(in srgb, var(--ow-orange) 60%, transparent);
     background: var(--bg-2);
-    color: var(--ow-orange);
+    color: var(--ow-orange-text);
     font-size: 1.35rem;
     line-height: 1;
     clip-path: polygon(0 0, calc(100% - 7px) 0, 100% 7px, 100% 100%, 0 100%);
@@ -339,7 +339,7 @@ async function sendMessage() {
 
 .new-conversation-button:hover {
     background: var(--ow-orange);
-    color: var(--bg-0);
+    color: var(--text-on-accent);
     transform: translateY(-1px);
 }
 
@@ -379,7 +379,7 @@ async function sendMessage() {
 }
 
 .conversation-item-mark {
-    color: var(--ow-orange);
+    color: var(--ow-orange-text);
     font-size: 0.8rem;
 }
 
@@ -552,7 +552,7 @@ async function sendMessage() {
     border: 1px solid var(--ow-orange);
     background: var(--ow-orange);
     padding: 13px 18px;
-    color: var(--bg-0);
+    color: var(--text-on-accent);
     clip-path: polygon(
         0 0,
         calc(100% - 10px) 0,

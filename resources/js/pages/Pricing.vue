@@ -120,7 +120,7 @@ import { Head } from '@inertiajs/vue3';
 .card-kicker,
 .simulation-note,
 .pricing-footer {
-    color: var(--orange);
+    color: var(--ow-orange-text);
     font-size: 0.66rem;
     letter-spacing: 0.18em;
 }
@@ -141,7 +141,7 @@ h1 {
 }
 
 h1 strong {
-    color: var(--orange);
+    color: var(--ow-orange-text);
 }
 
 .pricing-heading > p:not(.eyebrow) {
@@ -203,7 +203,7 @@ h1 strong {
     right: 18px;
     padding: 7px 10px;
     background: var(--orange);
-    color: var(--bg-0);
+    color: var(--text-on-accent);
     font-size: 0.56rem;
     font-weight: 900;
     letter-spacing: 0.12em;
@@ -224,7 +224,7 @@ h1 strong {
 }
 
 .featured h2 {
-    color: var(--orange);
+    color: var(--ow-orange-text);
 }
 
 .pricing-card h2 span {
@@ -257,7 +257,7 @@ ul {
 
 li::before {
     margin-right: 9px;
-    color: var(--orange);
+    color: var(--ow-orange-text);
     content: '▸';
     font-size: 0.5rem;
 }
@@ -291,17 +291,17 @@ li::before {
 .pricing-button.primary {
     border-color: var(--orange);
     background: var(--orange);
-    color: var(--bg-0);
+    color: var(--text-on-accent);
 }
 
 .pricing-button:hover {
     border-color: var(--orange);
-    color: var(--orange);
+    color: var(--ow-orange-text);
     transform: translateY(-1px);
 }
 
 .pricing-button.primary:hover {
-    color: var(--bg-0);
+    color: var(--text-on-accent);
     box-shadow: 0 0 20px var(--ow-orange-glow);
 }
 

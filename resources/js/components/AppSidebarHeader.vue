@@ -74,7 +74,7 @@ withDefaults(
 
 :deep(.owgg-sidebar-trigger:hover) {
     background: var(--ow-orange);
-    color: var(--bg-0);
+    color: var(--text-on-accent);
     transform: translateX(2px);
 }
 </style>

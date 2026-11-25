@@ -13,8 +13,11 @@ use App\Services\OverfastProfileNotFoundException;
 use Illuminate\Database\Eloquent\Model;
 use Illuminate\Http\Client\ConnectionException;
 use Illuminate\Http\Client\RequestException;
+use Illuminate\Http\RedirectResponse;
 use Illuminate\Http\Request;
 use Illuminate\Support\Arr;
+use Illuminate\Support\Facades\Cache;
+use Illuminate\Support\Facades\RateLimiter;
 use Inertia\Inertia;
 use Inertia\Response;
 use UnexpectedValueException;
@@ -43,8 +46,16 @@ class StatisticsController extends Controller
             || $user->stats_synced_at === null
             || $user->stats_synced_at->lt(now()->subHour());
         $syncFailed = false;
+        $syncStatusKey = ImportPlayerStats::syncStatusCacheKey($user->getKey());
+        $backgroundSyncFailed = Cache::get($syncStatusKey) === 'failed';
 
-        if ($needsSync) {
+        if ($backgroundSyncFailed) {
+            Cache::forget($syncStatusKey);
+            Inertia::flash('toast', [
+                'type' => 'error',
+                'message' => 'Your stats import failed. Please try again later.',
+            ]);
+        } elseif ($needsSync) {
             try {
                 ImportPlayerStats::dispatch($user);
             } catch (OverfastProfileNotFoundException) {
@@ -64,11 +75,21 @@ class StatisticsController extends Controller
             }
 
             $profile = $loadProfile();
+            $user->refresh();
         }
+
+        $syncing = Cache::get($syncStatusKey) === 'requested'
+            || ($needsSync && ! $syncFailed && ! $backgroundSyncFailed && (
+                $profile?->allHeroesStats === null
+                || $user->stats_synced_at === null
+                || $user->stats_synced_at->lt(now()->subHour())
+            ));
 
         return Inertia::render('Statistics/Index', [
             'playerId' => $playerId,
-            'syncing' => $needsSync && ! $syncFailed && $profile?->allHeroesStats === null,
+            'syncing' => $syncing,
+            'statsSyncedAt' => $user->stats_synced_at?->toIso8601String(),
+            'syncUrl' => route('statistics.sync', ['playerId' => $playerId]),
             'profile' => $profile?->only([
                 'player_id',
                 'name',
@@ -99,6 +120,58 @@ class StatisticsController extends Controller
                 'value' => $stat->stat_value,
             ])->values()->all() ?? [],
         ]);
+    }
+
+    public function sync(Request $request, string $playerId): RedirectResponse
+    {
+        $user = $request->user();
+        abort_unless($user instanceof User && $user->battletag === $playerId, 404);
+
+        $rateLimitKey = 'statistics-sync:'.$user->getKey();
+        $syncStatusKey = ImportPlayerStats::syncStatusCacheKey($user->getKey());
+
+        if (RateLimiter::tooManyAttempts($rateLimitKey, 1)) {
+            $waitSeconds = RateLimiter::availableIn($rateLimitKey);
+            Inertia::flash('toast', [
+                'type' => 'warning',
+                'message' => "Please wait {$waitSeconds} seconds before requesting another stats import.",
+            ]);
+
+            return to_route('statistics.show', ['playerId' => $playerId]);
+        }
+
+        RateLimiter::hit($rateLimitKey, 300);
+        Cache::put($syncStatusKey, 'requested', now()->addMinutes(10));
+
+        try {
+            ImportPlayerStats::dispatch($user);
+        } catch (OverfastProfileNotFoundException) {
+            RateLimiter::clear($rateLimitKey);
+            Cache::forget($syncStatusKey);
+            Inertia::flash('toast', [
+                'type' => 'error',
+                'message' => 'Your Overwatch profile is private or unavailable on OverFast.',
+            ]);
+
+            return to_route('statistics.show', ['playerId' => $playerId]);
+        } catch (ConnectionException|RequestException|UnexpectedValueException $exception) {
+            RateLimiter::clear($rateLimitKey);
+            Cache::forget($syncStatusKey);
+            report($exception);
+            Inertia::flash('toast', [
+                'type' => 'error',
+                'message' => 'Your Overwatch stats could not be imported right now. Please try again later.',
+            ]);
+
+            return to_route('statistics.show', ['playerId' => $playerId]);
+        }
+
+        Inertia::flash('toast', [
+            'type' => 'info',
+            'message' => 'A stats refresh was requested. The page will update after the import finishes.',
+        ]);
+
+        return to_route('statistics.show', ['playerId' => $playerId]);
     }
 
     /**

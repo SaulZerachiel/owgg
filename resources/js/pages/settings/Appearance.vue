@@ -25,7 +25,7 @@ defineOptions({
         <Heading
             variant="small"
             title="Appearance settings"
-            description="Update the appearance settings for your account"
+            description="Choose a light or dark theme, or follow your system preference. Your choice is saved in this browser."
         />
         <AppearanceTabs />
     </div>

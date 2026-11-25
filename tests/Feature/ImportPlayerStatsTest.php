@@ -143,7 +143,11 @@ test('BattleTag lookup imports and updates all statistics without duplicating th
                         'time_played' => 3600,
                         'hero_wins' => 20,
                     ],
-                    'combat' => ['eliminations' => 321, 'damage_done' => 100000],
+                    'combat' => [
+                        'eliminations' => 321,
+                        'damage_done' => 100000,
+                        'environmental_kills' => 0,
+                    ],
                     'assists' => ['assists' => 70, 'healing_done' => 50000],
                 ],
                 'ana' => [
@@ -154,7 +158,10 @@ test('BattleTag lookup imports and updates all statistics without duplicating th
                         'time_played' => 500,
                     ],
                     'combat' => ['eliminations' => 55, 'all_damage_done' => 10000],
-                    'hero_specific' => ['biotic_grenade_kills' => 4],
+                    'hero_specific' => [
+                        'biotic_grenade_kills' => 4,
+                        'unavailable_stat' => '/',
+                    ],
                 ],
             ]);
         }
@@ -177,6 +184,14 @@ test('BattleTag lookup imports and updates all statistics without duplicating th
     });
 
     ImportPlayerStats::dispatchSync($user);
+
+    AllHeroesStats::query()
+        ->whereKey($overfastPlayerId)
+        ->update(['barrier_damage_done_most_in_game' => 0]);
+    HeroStats::query()
+        ->where('player_id', $overfastPlayerId)
+        ->update(['kill_streak_best' => 0]);
+
     ImportPlayerStats::dispatchSync($user);
 
     $profile = Profile::query()->sole();
@@ -197,7 +212,10 @@ test('BattleTag lookup imports and updates all statistics without duplicating th
         ->and($rank->division)->toBe(2)
         ->and($roleStats->games_played)->toBe(42)
         ->and($allHeroesStats->eliminations)->toBe(321)
+        ->and($allHeroesStats->environmental_kills)->toBe(0)
+        ->and($allHeroesStats->barrier_damage_done_most_in_game)->toBeNull()
         ->and($heroStats->eliminations)->toBe(55)
+        ->and($heroStats->kill_streak_best)->toBeNull()
         ->and($heroSpecificStat->stat_key)->toBe('biotic_grenade_kills')
         ->and($profile->last_updated_at->equalTo(Carbon::createFromTimestampUTC(1777998881)))->toBeTrue()
         ->and($user->fresh()->stats_synced_at)->not->toBeNull()

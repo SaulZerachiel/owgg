@@ -99,7 +99,7 @@ const footerNavItems: NavItem[] = [
     --sidebar-background: var(--bg-1);
     --sidebar-foreground: var(--text-dim);
     --sidebar-primary: var(--ow-orange);
-    --sidebar-primary-foreground: var(--bg-0);
+    --sidebar-primary-foreground: var(--text-on-accent);
     --sidebar-accent: var(--bg-3);
     --sidebar-accent-foreground: var(--text);
     --sidebar-border: var(--surface-line);
@@ -154,13 +154,13 @@ const footerNavItems: NavItem[] = [
         [data-sidebar='menu-button'][data-active='true']
 ) {
     background: var(--ow-orange);
-    color: var(--bg-0);
+    color: var(--text-on-accent);
     box-shadow: 4px 0 0 var(--role-tank);
     font-weight: 800;
 }
 
 :deep(.owgg-sidebar [data-sidebar='sidebar'] [data-sidebar='group-label']) {
-    color: var(--ow-orange);
+    color: var(--ow-orange-text);
     font-size: 0.58rem;
     letter-spacing: 0.18em;
 }

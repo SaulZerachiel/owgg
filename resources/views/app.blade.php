@@ -24,11 +24,11 @@
         {{-- Inline style to set the HTML background color based on our theme in app.css --}}
         <style>
             html {
-                background-color: oklch(1 0 0);
+                background-color: var(--bg-0, #f1f4f8);
             }
 
             html.dark {
-                background-color: oklch(0.145 0 0);
+                background-color: var(--bg-0, #080b12);
             }
         </style>
 

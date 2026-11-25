@@ -73,6 +73,14 @@ type Progression = {
     previousCapturedAt: string;
     winrate: Comparison;
     deathsPer10: Comparison;
+    kda: Comparison;
+    roles: SnapshotGroup[];
+    heroes: SnapshotGroup[];
+};
+
+type SnapshotGroup = {
+    name: string;
+    comparisons: Record<string, Comparison>;
 };
 
 const props = defineProps<{
@@ -86,6 +94,28 @@ const props = defineProps<{
     statisticsUrl: string | null;
     coachUrl: string;
 }>();
+
+const hasProgressionMetrics = computed(() => {
+    const progression = props.progression;
+
+    return (
+        progression !== null &&
+        [
+            progression.winrate,
+            progression.deathsPer10,
+            progression.kda,
+            ...progression.roles.flatMap((role) =>
+                Object.values(role.comparisons),
+            ),
+            ...progression.heroes.flatMap((hero) =>
+                Object.values(hero.comparisons),
+            ),
+        ].some(
+            (comparison) =>
+                comparison.current !== null || comparison.previous !== null,
+        )
+    );
+});
 
 const page = usePage<{
     auth: { user: { name: string; battletag?: string | null } };
@@ -176,6 +206,22 @@ function changeClass(value: number | null, lowerIsBetter = false): string {
     return (lowerIsBetter ? value < 0 : value > 0)
         ? 'trend-positive'
         : 'trend-negative';
+}
+
+function comparisonLabel(key: string): string {
+    const labels: Record<string, string> = {
+        winrate: 'Win rate',
+        win_percentage: 'Win rate',
+        kda: 'KDA',
+        eliminations_avg_per_10_min: 'Eliminations / 10 min',
+        deaths_avg_per_10_min: 'Deaths / 10 min',
+    };
+
+    return labels[key] ?? key;
+}
+
+function comparisonSuffix(key: string): string {
+    return ['winrate', 'win_percentage'].includes(key) ? 'pp' : '';
 }
 </script>
 
@@ -322,63 +368,222 @@ function changeClass(value: number | null, lowerIsBetter = false): string {
                         </div>
                     </header>
                     <template v-if="progression">
-                        <div class="progress-grid">
-                            <article class="progress-card">
-                                <p>Win rate</p>
-                                <strong>
-                                    {{
-                                        formatNumber(
-                                            progression.winrate.current,
-                                        )
-                                    }}%
-                                </strong>
-                                <span
-                                    :class="
-                                        changeClass(progression.winrate.change)
+                        <template v-if="hasProgressionMetrics">
+                            <div class="progress-grid">
+                                <article
+                                    v-if="
+                                        progression.winrate.current !== null ||
+                                        progression.winrate.previous !== null
                                     "
+                                    class="progress-card"
                                 >
-                                    {{
-                                        formatChange(
-                                            progression.winrate.change,
-                                            'pp',
-                                        )
-                                    }}
-                                </span>
-                            </article>
-                            <article class="progress-card">
-                                <p>Deaths / 10 min</p>
-                                <strong>
-                                    {{
-                                        formatNumber(
-                                            progression.deathsPer10.current,
-                                        )
-                                    }}
-                                </strong>
-                                <span
-                                    :class="
-                                        changeClass(
-                                            progression.deathsPer10.change,
-                                            true,
-                                        )
+                                    <p>Win rate</p>
+                                    <strong>
+                                        {{
+                                            formatNumber(
+                                                progression.winrate.current,
+                                            )
+                                        }}%
+                                    </strong>
+                                    <span
+                                        :class="
+                                            changeClass(
+                                                progression.winrate.change,
+                                            )
+                                        "
+                                    >
+                                        {{
+                                            formatChange(
+                                                progression.winrate.change,
+                                                'pp',
+                                            )
+                                        }}
+                                    </span>
+                                </article>
+                                <article
+                                    v-if="
+                                        progression.deathsPer10.current !==
+                                            null ||
+                                        progression.deathsPer10.previous !==
+                                            null
                                     "
+                                    class="progress-card"
                                 >
-                                    {{
-                                        formatChange(
-                                            progression.deathsPer10.change,
-                                            '',
-                                        )
-                                    }}
-                                </span>
-                            </article>
-                        </div>
-                        <p class="comparison-note">
-                            Compared with
-                            {{ formatDate(progression.previousCapturedAt) }}
+                                    <p>Deaths / 10 min</p>
+                                    <strong>
+                                        {{
+                                            formatNumber(
+                                                progression.deathsPer10.current,
+                                            )
+                                        }}
+                                    </strong>
+                                    <span
+                                        :class="
+                                            changeClass(
+                                                progression.deathsPer10.change,
+                                                true,
+                                            )
+                                        "
+                                    >
+                                        {{
+                                            formatChange(
+                                                progression.deathsPer10.change,
+                                                '',
+                                            )
+                                        }}
+                                    </span>
+                                </article>
+                                <article
+                                    v-if="
+                                        progression.kda.current !== null ||
+                                        progression.kda.previous !== null
+                                    "
+                                    class="progress-card"
+                                >
+                                    <p>KDA</p>
+                                    <strong>
+                                        {{
+                                            formatNumber(
+                                                progression.kda.current,
+                                            )
+                                        }}
+                                    </strong>
+                                    <span
+                                        :class="
+                                            changeClass(progression.kda.change)
+                                        "
+                                    >
+                                        {{
+                                            formatChange(
+                                                progression.kda.change,
+                                                '',
+                                            )
+                                        }}
+                                    </span>
+                                </article>
+                            </div>
+                            <div
+                                v-if="
+                                    progression.roles.length ||
+                                    progression.heroes.length
+                                "
+                                class="progression-groups"
+                            >
+                                <section
+                                    v-if="progression.roles.length"
+                                    class="progression-group"
+                                >
+                                    <p class="panel-label">BY ROLE</p>
+                                    <article
+                                        v-for="role in progression.roles"
+                                        :key="role.name"
+                                        class="group-progress-card"
+                                    >
+                                        <h3>{{ role.name }}</h3>
+                                        <dl class="group-progress-metrics">
+                                            <div
+                                                v-for="(
+                                                    comparison, key
+                                                ) in role.comparisons"
+                                                :key="key"
+                                            >
+                                                <dt>
+                                                    {{ comparisonLabel(key) }}
+                                                </dt>
+                                                <dd>
+                                                    {{
+                                                        formatNumber(
+                                                            comparison.current,
+                                                        )
+                                                    }}
+                                                    <span
+                                                        :class="
+                                                            changeClass(
+                                                                comparison.change,
+                                                                key ===
+                                                                    'deaths_avg_per_10_min',
+                                                            )
+                                                        "
+                                                    >
+                                                        {{
+                                                            formatChange(
+                                                                comparison.change,
+                                                                comparisonSuffix(
+                                                                    key,
+                                                                ),
+                                                            )
+                                                        }}
+                                                    </span>
+                                                </dd>
+                                            </div>
+                                        </dl>
+                                    </article>
+                                </section>
+                                <section
+                                    v-if="progression.heroes.length"
+                                    class="progression-group"
+                                >
+                                    <p class="panel-label">TOP HERO TRENDS</p>
+                                    <article
+                                        v-for="hero in progression.heroes"
+                                        :key="hero.name"
+                                        class="group-progress-card"
+                                    >
+                                        <h3>{{ hero.name }}</h3>
+                                        <dl class="group-progress-metrics">
+                                            <div
+                                                v-for="(
+                                                    comparison, key
+                                                ) in hero.comparisons"
+                                                :key="key"
+                                            >
+                                                <dt>
+                                                    {{ comparisonLabel(key) }}
+                                                </dt>
+                                                <dd>
+                                                    {{
+                                                        formatNumber(
+                                                            comparison.current,
+                                                        )
+                                                    }}
+                                                    <span
+                                                        :class="
+                                                            changeClass(
+                                                                comparison.change,
+                                                                key ===
+                                                                    'deaths_avg_per_10_min',
+                                                            )
+                                                        "
+                                                    >
+                                                        {{
+                                                            formatChange(
+                                                                comparison.change,
+                                                                comparisonSuffix(
+                                                                    key,
+                                                                ),
+                                                            )
+                                                        }}
+                                                    </span>
+                                                </dd>
+                                            </div>
+                                        </dl>
+                                    </article>
+                                </section>
+                            </div>
+                            <p class="comparison-note">
+                                Compared with
+                                {{ formatDate(progression.previousCapturedAt) }}
+                            </p>
+                        </template>
+                        <p v-else class="empty-copy">
+                            These snapshots do not contain comparable
+                            performance metrics.
                         </p>
                     </template>
                     <p v-else class="empty-copy">
-                        Progression appears after at least two imports with
-                        changed statistics.
+                        Snapshots are saved after successful imports when your
+                        stats change. Visit Statistics to check for updates;
+                        imports are checked at most once per hour.
                     </p>
                 </section>
             </div>
@@ -502,7 +707,7 @@ function changeClass(value: number | null, lowerIsBetter = false): string {
 }
 
 .dashboard-eyebrow {
-    color: var(--orange);
+    color: var(--ow-orange-text);
 }
 
 h1,
@@ -594,7 +799,7 @@ h1 strong {
 }
 
 .panel-label {
-    color: var(--orange);
+    color: var(--ow-orange-text);
     font-family: var(--font-heading);
     font-weight: 800;
 }
@@ -637,7 +842,7 @@ h1 strong {
 
 .primary-button {
     border: 1px solid var(--ow-orange);
-    color: var(--bg-0);
+    color: var(--text-on-accent);
     background: var(--ow-orange);
 }
 
@@ -844,8 +1049,79 @@ h1 strong {
 
 .progress-grid {
     display: grid;
-    grid-template-columns: repeat(2, minmax(0, 1fr));
+    grid-template-columns: repeat(auto-fit, minmax(160px, 1fr));
     gap: 10px;
+}
+
+.progression-groups {
+    display: grid;
+    grid-template-columns: repeat(auto-fit, minmax(240px, 1fr));
+    gap: 18px;
+    margin-top: 20px;
+}
+
+.progression-group {
+    min-width: 0;
+}
+
+.progression-group .panel-label {
+    margin: 0 0 8px;
+    color: var(--text-dim);
+    font-family: var(--font-heading);
+    font-size: 0.66rem;
+    font-weight: 800;
+    letter-spacing: 0.1em;
+}
+
+.group-progress-card {
+    margin-top: 8px;
+    padding: 12px;
+    border: 1px solid var(--surface-line);
+    background: var(--bg-2);
+}
+
+.group-progress-card h3 {
+    margin: 0 0 10px;
+    color: var(--text);
+    font-family: var(--font-heading);
+    font-size: 0.9rem;
+    font-weight: 800;
+    letter-spacing: 0.04em;
+    text-transform: uppercase;
+}
+
+.group-progress-metrics {
+    display: grid;
+    gap: 8px;
+    margin: 0;
+}
+
+.group-progress-metrics > div {
+    display: flex;
+    align-items: baseline;
+    justify-content: space-between;
+    gap: 10px;
+}
+
+.group-progress-metrics dt {
+    color: var(--text-dim);
+    font-size: 0.72rem;
+}
+
+.group-progress-metrics dd {
+    display: flex;
+    flex-wrap: wrap;
+    justify-content: flex-end;
+    gap: 8px;
+    margin: 0;
+    color: var(--text);
+    font-size: 0.75rem;
+    font-variant-numeric: tabular-nums;
+    text-align: right;
+}
+
+.group-progress-metrics dd span {
+    font-weight: 800;
 }
 
 .progress-card strong {

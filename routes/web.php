@@ -11,6 +11,7 @@ Route::inertia('/', 'Welcome')->name('home');
 Route::middleware(['auth', 'verified'])->group(function () {
     Route::get('dashboard', [DashboardController::class, 'show'])->name('dashboard');
     Route::get('{playerId}/stats', [StatisticsController::class, 'show'])->name('statistics.show');
+    Route::post('{playerId}/stats/sync', [StatisticsController::class, 'sync'])->name('statistics.sync');
     Route::get('chat', [ChatController::class, 'page'])->name('chat');
     Route::get('chat/conversations/{conversation}', [ChatController::class, 'conversation'])
         ->name('chat.conversations.show');

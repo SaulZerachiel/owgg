@@ -87,6 +87,18 @@ test('the dashboard summarizes the signed-in player stats and snapshot progressi
             'all_heroes' => [
                 'winrate' => 55,
                 'deaths_avg_per_10_min' => 9,
+                'kda' => 2.5,
+            ],
+            'roles' => [
+                ['role' => 'Support', 'metrics' => ['winrate' => 50, 'kda' => 2]],
+            ],
+            'heroes' => [
+                ['hero' => 'Moira', 'metrics' => [
+                    'time_played' => 12000,
+                    'win_percentage' => 50,
+                    'eliminations_avg_per_10_min' => 10,
+                    'deaths_avg_per_10_min' => 8,
+                ]],
             ],
         ],
         'captured_at' => now()->subDay(),
@@ -97,6 +109,18 @@ test('the dashboard summarizes the signed-in player stats and snapshot progressi
             'all_heroes' => [
                 'winrate' => 60,
                 'deaths_avg_per_10_min' => 8,
+                'kda' => 3.2,
+            ],
+            'roles' => [
+                ['role' => 'Support', 'metrics' => ['winrate' => 60, 'kda' => 3]],
+            ],
+            'heroes' => [
+                ['hero' => 'Moira', 'metrics' => [
+                    'time_played' => 15000,
+                    'win_percentage' => 60,
+                    'eliminations_avg_per_10_min' => 12,
+                    'deaths_avg_per_10_min' => 7,
+                ]],
             ],
         ],
         'captured_at' => now(),
@@ -115,6 +139,36 @@ test('the dashboard summarizes the signed-in player stats and snapshot progressi
             ->where('topHeroes.0.hero', 'Moira')
             ->where('progression.winrate.change', 5)
             ->where('progression.deathsPer10.change', -1)
+            ->where('progression.kda.change', 0.7)
+            ->where('progression.roles.0.name', 'Support')
+            ->where('progression.roles.0.comparisons.winrate.change', 10)
+            ->where('progression.heroes.0.name', 'Moira')
+            ->where('progression.heroes.0.comparisons.eliminations_avg_per_10_min.change', 2)
+            ->where('progression.heroes.0.comparisons.deaths_avg_per_10_min.change', -1)
             ->where('statisticsUrl', route('statistics.show', ['playerId' => 'Player-1234'])),
+        );
+});
+
+test('the dashboard handles snapshots without comparable data', function () {
+    $user = User::factory()->create(['battletag' => 'Player-1234']);
+    $profile = Profile::factory()->for($user)->create();
+
+    foreach (['a', 'b'] as $index => $fingerprint) {
+        $profile->statSnapshots()->create([
+            'fingerprint' => str_repeat($fingerprint, 64),
+            'snapshot' => [],
+            'captured_at' => now()->subHours($index),
+        ]);
+    }
+
+    $this->actingAs($user)
+        ->get(route('dashboard'))
+        ->assertOk()
+        ->assertInertia(fn (Assert $page) => $page
+            ->where('progression.winrate.current', null)
+            ->where('progression.deathsPer10.current', null)
+            ->where('progression.kda.current', null)
+            ->where('progression.roles', [])
+            ->where('progression.heroes', []),
         );
 });

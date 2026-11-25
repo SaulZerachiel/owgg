@@ -105,13 +105,18 @@ class DashboardController extends Controller
      *     capturedAt: string,
      *     previousCapturedAt: string,
      *     winrate: array{current: float|null, previous: float|null, change: float|null},
-     *     deathsPer10: array{current: float|null, previous: float|null, change: float|null}
+     *     deathsPer10: array{current: float|null, previous: float|null, change: float|null},
+     *     kda: array{current: float|null, previous: float|null, change: float|null},
+     *     roles: array<int, array{name: string, comparisons: array<string, array{current: float|null, previous: float|null, change: float|null}>}>,
+     *     heroes: array<int, array{name: string, comparisons: array<string, array{current: float|null, previous: float|null, change: float|null}>}>
      * }
      */
     private function progression(PlayerStatSnapshot $current, PlayerStatSnapshot $previous): array
     {
         $currentStats = $current->snapshot['all_heroes'] ?? [];
         $previousStats = $previous->snapshot['all_heroes'] ?? [];
+        $currentSnapshot = $current->snapshot;
+        $previousSnapshot = $previous->snapshot;
 
         return [
             'capturedAt' => $current->captured_at->toIso8601String(),
@@ -124,7 +129,105 @@ class DashboardController extends Controller
                 $currentStats['deaths_avg_per_10_min'] ?? null,
                 $previousStats['deaths_avg_per_10_min'] ?? null,
             ),
+            'kda' => $this->compare(
+                $currentStats['kda'] ?? null,
+                $previousStats['kda'] ?? null,
+            ),
+            'roles' => $this->compareGroups(
+                $currentSnapshot['roles'] ?? [],
+                $previousSnapshot['roles'] ?? [],
+                'role',
+                ['winrate' => 'winrate', 'kda' => 'kda'],
+            ),
+            'heroes' => $this->compareGroups(
+                $currentSnapshot['heroes'] ?? [],
+                $previousSnapshot['heroes'] ?? [],
+                'hero',
+                [
+                    'winrate' => 'win_percentage',
+                    'eliminations_avg_per_10_min' => 'eliminations_avg_per_10_min',
+                    'deaths_avg_per_10_min' => 'deaths_avg_per_10_min',
+                ],
+                5,
+            ),
         ];
+    }
+
+    /**
+     * @param  array<string, string>  $metricKeys
+     * @return array<int, array{name: string, comparisons: array<string, array{current: float|null, previous: float|null, change: float|null}>}>
+     */
+    private function compareGroups(
+        mixed $currentGroups,
+        mixed $previousGroups,
+        string $groupKey,
+        array $metricKeys,
+        int $limit = 0,
+    ): array {
+        if (! is_array($currentGroups) || ! is_array($previousGroups)) {
+            return [];
+        }
+
+        if ($limit > 0) {
+            usort($currentGroups, static function (mixed $first, mixed $second): int {
+                $firstTime = is_array($first)
+                    && is_array($first['metrics'] ?? null)
+                    && is_numeric($first['metrics']['time_played'] ?? null)
+                    ? (float) $first['metrics']['time_played']
+                    : 0;
+                $secondTime = is_array($second)
+                    && is_array($second['metrics'] ?? null)
+                    && is_numeric($second['metrics']['time_played'] ?? null)
+                    ? (float) $second['metrics']['time_played']
+                    : 0;
+
+                return $secondTime <=> $firstTime;
+            });
+            $currentGroups = array_slice($currentGroups, 0, $limit);
+        }
+
+        $previousByName = [];
+
+        foreach ($previousGroups as $group) {
+            if (is_array($group) && is_string($group[$groupKey] ?? null)) {
+                $previousByName[$group[$groupKey]] = $group;
+            }
+        }
+
+        $comparisons = [];
+
+        foreach ($currentGroups as $group) {
+            if (! is_array($group) || ! is_string($group[$groupKey] ?? null)) {
+                continue;
+            }
+
+            $name = $group[$groupKey];
+            $currentMetrics = is_array($group['metrics'] ?? null) ? $group['metrics'] : [];
+            $previousMetrics = is_array($previousByName[$name]['metrics'] ?? null)
+                ? $previousByName[$name]['metrics']
+                : [];
+            $metricComparisons = [];
+
+            foreach ($metricKeys as $key => $metricKey) {
+                $comparison = $this->compare(
+                    $currentMetrics[$metricKey] ?? null,
+                    $previousMetrics[$metricKey] ?? null,
+                );
+
+                if ($comparison['current'] !== null || $comparison['previous'] !== null) {
+                    $metricComparisons[$key] = $comparison;
+                }
+            }
+
+            if ($metricComparisons !== []) {
+                $comparisons[] = [
+                    'name' => $name,
+                    'comparisons' => $metricComparisons,
+                ];
+            }
+        }
+
+        return $comparisons;
     }
 
     /**
