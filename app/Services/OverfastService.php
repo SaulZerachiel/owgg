@@ -106,9 +106,22 @@ class OverfastService
      * @throws ConnectionException
      * @throws OverfastProfileNotFoundException
      */
-    public function heroes(): array
+    public function heroes(string $locale = 'en-us'): array
     {
-        return $this->getList('/heroes');
+        return $this->getList('/heroes', ['locale' => $locale]);
+    }
+
+    /**
+     * @return array<string, mixed>
+     *
+     * @throws ConnectionException
+     * @throws OverfastProfileNotFoundException
+     */
+    public function hero(string $heroKey, string $locale = 'en-us'): array
+    {
+        return $this->getObject('/heroes/'.rawurlencode($heroKey), [
+            'locale' => $locale,
+        ]);
     }
 
     /**
@@ -150,11 +163,12 @@ class OverfastService
     }
 
     /**
+     * @param  array<string, string>  $query
      * @return list<array<string, mixed>>
      */
-    private function getList(string $path): array
+    private function getList(string $path, array $query = []): array
     {
-        $data = $this->get($path);
+        $data = $this->get($path, $query);
 
         if (! array_is_list($data)) {
             throw new UnexpectedValueException('OverFast returned an invalid list response.');

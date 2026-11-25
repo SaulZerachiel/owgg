@@ -48,6 +48,7 @@ const navItems = computed<NavItem[]>(() => {
     const items: NavItem[] = [
         { title: 'Dashboard', href: dashboard() },
         { title: 'Coach Winston', href: '/chat' },
+        { title: 'Counterwatch', href: '/counterwatch' },
         { title: 'Pricing', href: '/pricing' },
         { title: 'About Us', href: '/about-us' },
     ];

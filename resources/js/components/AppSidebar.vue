@@ -6,6 +6,7 @@ import {
     FolderGit2,
     LayoutGrid,
     MessageCircle,
+    Swords,
 } from '@lucide/vue';
 import { computed } from 'vue';
 import AppLogo from '@/components/AppLogo.vue';
@@ -39,6 +40,11 @@ const mainNavItems = computed<NavItem[]>(() => {
             title: 'Coach IA',
             href: '/chat',
             icon: MessageCircle,
+        },
+        {
+            title: 'Counterwatch',
+            href: '/counterwatch',
+            icon: Swords,
         },
     ];
     const battleTag = page.props.auth.user.battletag;

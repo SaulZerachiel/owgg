@@ -2,9 +2,45 @@
 
 use App\Ai\AiClient;
 use App\Ai\AiResult;
+use App\Ai\OpenRouterClient;
 use App\Models\AiCall;
 use App\Models\Profile;
 use App\Models\User;
+use Illuminate\Http\Client\Request;
+use Illuminate\Support\Facades\Http;
+
+beforeEach(function () {
+    Http::fake([
+        'https://overfast-api.tekrop.fr/*' => function (Request $request) {
+            return match (parse_url($request->url(), PHP_URL_PATH)) {
+                '/heroes' => Http::response([
+                    ['key' => 'ana', 'name' => 'Ana'],
+                    ['key' => 'mei', 'name' => 'Mei'],
+                    ['key' => 'sombra', 'name' => 'Sombra'],
+                ]),
+                '/heroes/ana' => Http::response([
+                    'name' => 'Ana',
+                    'role' => 'support',
+                    'subrole' => 'medic',
+                    'abilities' => [
+                        ['name' => 'Biotic Rifle', 'description' => 'A scoped rifle.'],
+                    ],
+                    'perks' => [
+                        'minor' => [
+                            ['name' => 'Ana Minor Perk', 'description' => 'A test perk.'],
+                        ],
+                        'major' => [],
+                    ],
+                ]),
+                default => Http::response([
+                    'name' => 'Hero',
+                    'abilities' => [],
+                    'perks' => ['minor' => [], 'major' => []],
+                ]),
+            };
+        },
+    ]);
+});
 
 test('guests cannot use the coach', function () {
     $response = $this->postJson(route('chat.message'), ['message' => 'Bonjour']);
@@ -38,6 +74,33 @@ test('authenticated users can use the fake coach and see their remaining quota',
         ->assertJsonPath('messages.0.role', 'user')
         ->assertJsonPath('messages.0.content', 'Comment améliorer ma visée ?')
         ->assertJsonPath('messages.1.role', 'assistant');
+});
+
+test('the OpenRouter response budget is configurable for more detailed coaching', function () {
+    config([
+        'services.openrouter.key' => 'test-key',
+        'services.openrouter.model' => 'test/model',
+        'services.openrouter.max_tokens' => 1500,
+    ]);
+    Http::fake([
+        'https://openrouter.ai/api/v1/chat/completions' => Http::response([
+            'model' => 'test/model',
+            'choices' => [
+                ['message' => ['content' => 'Conseil tactique.']],
+            ],
+            'usage' => [
+                'prompt_tokens' => 20,
+                'completion_tokens' => 30,
+                'cost' => 0.001,
+            ],
+        ]),
+    ]);
+
+    app(OpenRouterClient::class)->chat([
+        ['role' => 'user', 'content' => 'Comment exploiter ce matchup ?'],
+    ]);
+
+    Http::assertSent(fn (Request $request): bool => $request->data()['max_tokens'] === 1500);
 });
 
 test('the coach receives only the authenticated player snapshots and coaching skills', function () {
@@ -92,7 +155,8 @@ test('the coach receives only the authenticated player snapshots and coaching sk
         ->toContain('"games_played":123')
         ->toContain('"games_played":100')
         ->toContain('snapshot précédent')
-        ->toContain('Pour analyser un héros')
+        ->toContain('Pour analyser les performances d’un héros')
+        ->toContain('Ana Minor Perk')
         ->not->toContain('"games_played":987');
 });
 

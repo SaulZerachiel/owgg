@@ -2,6 +2,7 @@
 
 use App\Http\Controllers\BattlenetController;
 use App\Http\Controllers\ChatController;
+use App\Http\Controllers\CounterwatchController;
 use App\Http\Controllers\DashboardController;
 use App\Http\Controllers\StatisticsController;
 use Illuminate\Support\Facades\Route;
@@ -10,6 +11,7 @@ Route::inertia('/', 'Welcome')->name('home');
 
 Route::middleware(['auth', 'verified'])->group(function () {
     Route::get('dashboard', [DashboardController::class, 'show'])->name('dashboard');
+    Route::get('counterwatch', [CounterwatchController::class, 'show'])->name('counterwatch');
     Route::get('{playerId}/stats', [StatisticsController::class, 'show'])->name('statistics.show');
     Route::post('{playerId}/stats/sync', [StatisticsController::class, 'sync'])->name('statistics.sync');
     Route::get('chat', [ChatController::class, 'page'])->name('chat');

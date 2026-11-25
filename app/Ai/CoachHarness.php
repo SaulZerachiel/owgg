@@ -3,6 +3,7 @@
 namespace App\Ai;
 
 use App\Models\User;
+use App\Services\CoachGameKnowledgeBuilder;
 use App\Services\CoachStatsContextBuilder;
 
 final class CoachHarness
@@ -10,6 +11,7 @@ final class CoachHarness
     public function __construct(
         private readonly CoachSkillRegistry $skills,
         private readonly CoachStatsContextBuilder $stats,
+        private readonly CoachGameKnowledgeBuilder $gameKnowledge,
     ) {}
 
     /**
@@ -26,6 +28,10 @@ final class CoachHarness
             [
                 'role' => 'system',
                 'content' => "Modules de coaching à appliquer selon la question :\n".$this->skills->instructions(),
+            ],
+            [
+                'role' => 'system',
+                'content' => $this->gameKnowledge->build($message, $history),
             ],
             [
                 'role' => 'system',
