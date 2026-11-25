@@ -18,8 +18,6 @@ type CounterPick = {
     key: string;
     name: string;
     reason: string;
-    winrate: number | null;
-    winrateDifference: number | null;
 };
 
 type TierListHero = {
@@ -33,7 +31,8 @@ type TierListHero = {
 type MapRecommendation = {
     key: string;
     name: string;
-    reason: string;
+    source: string;
+    sourceUrl: string | null;
 };
 
 type HeroGuide = {
@@ -499,7 +498,7 @@ function changeMap(event: Event): void {
                     <div class="section-heading">
                         <div>
                             <p class="eyebrow">
-                                GÉOMÉTRIE // ENVIRONNEMENT DE JEU
+                                RÉFÉRENCE // AFFINITÉS DE CARTE
                             </p>
                             <h2 id="map-title">SES CARTES FAVORABLES</h2>
                         </div>
@@ -508,10 +507,10 @@ function changeMap(event: Event): void {
                         >
                     </div>
                     <p class="map-intro">
-                        Ces tendances viennent de la géométrie des cartes, pas
-                        de statistiques de victoire. Le point, le côté attaque /
-                        défense et la composition adverse peuvent changer le
-                        résultat.
+                        Les trois cartes favorables et exigeantes viennent des
+                        fiches Counterwatch, sans afficher leurs winrates. Mode,
+                        point, côté et composition peuvent changer l’intérêt
+                        d’une carte.
                     </p>
                     <p v-if="mapCatalogError" class="map-error" role="status">
                         {{ mapCatalogError }}
@@ -526,12 +525,19 @@ function changeMap(event: Event): void {
                                     :key="map.key"
                                 >
                                     <strong>{{ map.name }}</strong>
-                                    <p>{{ map.reason }}</p>
+                                    <a
+                                        v-if="map.sourceUrl"
+                                        :href="map.sourceUrl"
+                                        target="_blank"
+                                        rel="noreferrer"
+                                    >
+                                        Statistiques par carte : HeroStats.live
+                                    </a>
                                 </li>
                             </ol>
                             <p v-else class="map-empty">
-                                Les cartes ne sont pas disponibles pour le
-                                moment.
+                                Aucun classement provisoire n’est disponible
+                                pour ce héros dans les données reçues.
                             </p>
                         </article>
                         <article class="map-set difficult ow-panel">
@@ -543,12 +549,19 @@ function changeMap(event: Event): void {
                                     :key="map.key"
                                 >
                                     <strong>{{ map.name }}</strong>
-                                    <p>{{ map.reason }}</p>
+                                    <a
+                                        v-if="map.sourceUrl"
+                                        :href="map.sourceUrl"
+                                        target="_blank"
+                                        rel="noreferrer"
+                                    >
+                                        Statistiques par carte : HeroStats.live
+                                    </a>
                                 </li>
                             </ol>
                             <p v-else class="map-empty">
-                                Les cartes ne sont pas disponibles pour le
-                                moment.
+                                Aucun classement provisoire n’est disponible
+                                pour ce héros dans les données reçues.
                             </p>
                         </article>
                     </div>
@@ -579,17 +592,10 @@ function changeMap(event: Event): void {
                     <p class="counter-intro">
                         Les matchups héros-à-héros enregistrés passent en
                         premier; les options restantes s’appuient sur le style
-                        de jeu du héros. Ce sont des pistes à adapter à la
-                        carte, à la composition et à l’exécution.
+                        du héros et, si besoin, sur d’autres archétypes. Ce sont
+                        des pistes à adapter à la carte, à la composition et à
+                        l’exécution.
                     </p>
-                    <p class="counter-stats-note">
-                        Le winrate compare la performance globale de chaque
-                        héros{{
-                            selectedMapName ? ` sur ${selectedMapName}` : ''
-                        }}; ce n’est pas son taux de victoire contre
-                        {{ selectedHero.name }}.
-                    </p>
-
                     <div class="counter-grid">
                         <article
                             v-for="role in counterRoles"
@@ -627,32 +633,6 @@ function changeMap(event: Event): void {
                                     <div>
                                         <strong>{{ pick.name }}</strong>
                                         <p>{{ pick.reason }}</p>
-                                        <p
-                                            v-if="pick.winrate !== null"
-                                            class="counter-pick-stats"
-                                        >
-                                            {{ pick.winrate.toFixed(1) }}% de
-                                            winrate
-                                            <span
-                                                v-if="
-                                                    pick.winrateDifference !==
-                                                    null
-                                                "
-                                            >
-                                                ·
-                                                {{
-                                                    pick.winrateDifference > 0
-                                                        ? '+'
-                                                        : ''
-                                                }}{{
-                                                    pick.winrateDifference.toFixed(
-                                                        1,
-                                                    )
-                                                }}
-                                                pts vs
-                                                {{ selectedHero.name }}
-                                            </span>
-                                        </p>
                                     </div>
                                 </li>
                             </ol>
@@ -1196,16 +1176,11 @@ input:focus-visible {
     margin-left: auto;
 }
 
-.tierlist-note,
-.counter-stats-note {
+.tierlist-note {
     margin: 12px 0 16px;
     color: var(--text-mute);
     font-size: 0.7rem;
     line-height: 1.55;
-}
-
-.counter-stats-note {
-    margin: -5px 0 16px;
 }
 
 .tier-groups {
@@ -1405,13 +1380,6 @@ input:focus-visible {
     line-height: 1.5;
 }
 
-.counter-pick .counter-pick-stats {
-    margin-top: 5px;
-    color: var(--ow-orange);
-    font-size: 0.67rem;
-    font-weight: 700;
-}
-
 .counter-empty {
     padding-top: 15px;
 }
@@ -1491,12 +1459,19 @@ input:focus-visible {
 }
 
 .map-set li p,
+.map-set li a,
 .map-empty,
 .map-error {
     margin: 0;
     color: var(--text-dim);
     font-size: 0.75rem;
     line-height: 1.55;
+}
+
+.map-set li a {
+    display: inline-block;
+    margin-top: 3px;
+    text-underline-offset: 3px;
 }
 
 .map-empty {

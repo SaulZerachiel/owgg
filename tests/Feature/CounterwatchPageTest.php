@@ -5,6 +5,7 @@ use App\Services\CounterwatchGuide;
 use Illuminate\Foundation\Testing\RefreshDatabase;
 use Illuminate\Http\Client\Request;
 use Illuminate\Support\Facades\Cache;
+use Illuminate\Support\Facades\DB;
 use Illuminate\Support\Facades\Http;
 use Inertia\Testing\AssertableInertia as Assert;
 
@@ -38,6 +39,12 @@ test('authenticated users can browse heroes and role-specific matchup suggestion
                 ['key' => 'kings-row', 'name' => 'King’s Row', 'uses' => ['standard']],
                 ['key' => 'lijiang-tower', 'name' => 'Lijiang Tower', 'uses' => ['standard']],
                 ['key' => 'samoa', 'name' => 'Samoa', 'uses' => ['standard']],
+                ['key' => 'rialto', 'name' => 'Rialto', 'uses' => ['standard']],
+                ['key' => 'eichenwalde', 'name' => 'Eichenwalde', 'uses' => ['standard']],
+                ['key' => 'nepal', 'name' => 'Nepal', 'uses' => ['standard']],
+                ['key' => 'suravasa', 'name' => 'Suravasa', 'uses' => ['standard']],
+                ['key' => 'runasapi', 'name' => 'Runasapi', 'uses' => ['standard']],
+                ['key' => 'ilios', 'name' => 'Ilios', 'uses' => ['standard']],
             ]),
             '/heroes/stats' => Http::response([
                 ['hero' => 'doomfist', 'winrate' => 54.0, 'pickrate' => 5.0],
@@ -71,9 +78,10 @@ test('authenticated users can browse heroes and role-specific matchup suggestion
             ->where('tierList.0.key', 'doomfist')
             ->where('tierList.0.winrate', 54)
             ->where('heroes.0.guide.counters.tank.0.key', 'winston')
-            ->where('heroes.0.guide.counters.tank.0.winrateDifference', 2)
-            ->where('heroes.0.guide.counters.damage.0.key', 'tracer')
-            ->where('heroes.0.guide.counters.support.0.key', 'kiriko')
+            ->where('heroes.0.guide.counters.damage.0.key', 'venture')
+            ->where('heroes.0.guide.counters.support.0.key', 'brigitte')
+            ->missing('heroes.0.guide.counters.tank.0.winrate')
+            ->missing('heroes.0.guide.counters.tank.0.winrateDifference')
             ->missing('heroes.0.guide.counters.tank.0.score')
             ->where('compositionGuide.cycle.0.beats', 'brawl')
             ->where('catalogError', null),
@@ -83,7 +91,7 @@ test('authenticated users can browse heroes and role-specific matchup suggestion
         'hero_id' => 'winston',
         'target_hero_id' => 'bastion',
         'relation_type' => 'counter',
-        'score' => -2,
+        'score' => -1,
     ]);
     $this->assertDatabaseHas('hero_matchups', [
         'hero_id' => 'winston',
@@ -91,6 +99,29 @@ test('authenticated users can browse heroes and role-specific matchup suggestion
         'relation_type' => 'synergy',
         'score' => 2,
     ]);
+    $this->assertDatabaseHas('hero_matchups', [
+        'hero_id' => 'roadhog',
+        'target_hero_id' => 'winston',
+        'relation_type' => 'counter',
+        'score' => 2,
+    ]);
+    $this->assertDatabaseHas('hero_matchups', [
+        'hero_id' => 'doctrine',
+        'target_hero_id' => 'bastion',
+        'relation_type' => 'counter',
+        'score' => 2,
+    ]);
+
+    $positiveCounters = DB::table('hero_matchups')
+        ->where('relation_type', 'counter')
+        ->where('score', '>', 0)
+        ->get(['target_hero_id'])
+        ->groupBy('target_hero_id');
+
+    $this->assertCount(54, $positiveCounters);
+    foreach ($positiveCounters as $countersForHero) {
+        $this->assertCount(3, $countersForHero);
+    }
 
     Http::assertSent(fn (Request $request): bool => str_ends_with(
         $request->url(),
@@ -139,6 +170,89 @@ test('every curated hero receives three suggestions for every role', function ()
             );
         }
     }
+});
+
+test('curated map lists are disjoint and exclude Hanamura and Hanaoka', function () {
+    $recommendations = DB::table('counterwatch_hero_map_recommendations')
+        ->get(['hero_id', 'map_id', 'suitability'])
+        ->groupBy('hero_id');
+
+    $this->assertCount(54, $recommendations);
+
+    foreach ($recommendations as $heroRecommendations) {
+        $favorable = $heroRecommendations
+            ->where('suitability', 'favorable')
+            ->pluck('map_id')
+            ->all();
+        $difficult = $heroRecommendations
+            ->where('suitability', 'difficult')
+            ->pluck('map_id')
+            ->all();
+
+        $this->assertSame([], array_values(array_intersect($favorable, $difficult)));
+        $this->assertCount(3, $favorable);
+        $this->assertCount(3, $difficult);
+    }
+
+    $this->assertDatabaseMissing('counterwatch_hero_map_recommendations', ['map_id' => 'hanamura']);
+    $this->assertDatabaseMissing('counterwatch_hero_map_recommendations', ['map_id' => 'hanaoka']);
+    $this->assertDatabaseHas('counterwatch_hero_map_recommendations', [
+        'hero_id' => 'hanzo',
+        'map_id' => 'paraiso',
+        'suitability' => 'favorable',
+        'source' => 'counterwatch-map-check-2026-11-25',
+        'source_url' => null,
+    ]);
+    $this->assertDatabaseHas('counterwatch_hero_map_recommendations', [
+        'hero_id' => 'winston',
+        'map_id' => 'colosseo',
+        'suitability' => 'favorable',
+        'source' => 'counterwatch-map-check-2026-11-25',
+    ]);
+    $this->assertDatabaseHas('counterwatch_hero_map_recommendations', [
+        'hero_id' => 'bastion',
+        'map_id' => 'lijiang-tower',
+        'suitability' => 'difficult',
+        'source' => 'counterwatch-map-check-2026-11-25',
+    ]);
+});
+
+test('pharah has Lijiang Tower in the favorable list only', function () {
+    Cache::flush();
+    Http::fake(function (Request $request) {
+        return match (parse_url($request->url(), PHP_URL_PATH)) {
+            '/heroes' => Http::response([
+                ['key' => 'pharah', 'name' => 'Pharah', 'role' => 'damage'],
+            ]),
+            '/maps' => Http::response([
+                ['key' => 'ilios', 'name' => 'Ilios', 'uses' => ['standard']],
+                ['key' => 'lijiang-tower', 'name' => 'Lijiang Tower', 'uses' => ['standard']],
+                ['key' => 'eichenwalde', 'name' => 'Eichenwalde', 'uses' => ['standard']],
+                ['key' => 'runasapi', 'name' => 'Runasapi', 'uses' => ['standard']],
+                ['key' => 'midtown', 'name' => 'Midtown', 'uses' => ['standard']],
+                ['key' => 'havana', 'name' => 'Havana', 'uses' => ['standard']],
+            ]),
+            '/heroes/stats' => Http::response([
+                ['hero' => 'pharah', 'winrate' => 50.0, 'pickrate' => 5.0],
+            ]),
+            default => Http::response([], 404),
+        };
+    });
+
+    $this->actingAs(User::factory()->create())
+        ->get(route('counterwatch', ['hero' => 'pharah']))
+        ->assertOk()
+        ->assertInertia(fn (Assert $page) => $page
+            ->where('selectedHeroKey', 'pharah')
+            ->where('heroes.0.guide.maps.favorable.0.key', 'ilios')
+            ->where('heroes.0.guide.maps.favorable.1.key', 'lijiang-tower')
+            ->where('heroes.0.guide.maps.favorable.2.key', 'eichenwalde')
+            ->where('heroes.0.guide.maps.difficult.0.key', 'runasapi')
+            ->where('heroes.0.guide.maps.difficult.1.key', 'midtown')
+            ->where('heroes.0.guide.maps.difficult.2.key', 'havana')
+            ->missing('heroes.0.guide.maps.favorable.1.reason')
+            ->missing('heroes.0.guide.maps.difficult.1.reason'),
+        );
 });
 
 test('the matchup guide reports when the hero roster cannot be loaded', function () {
@@ -253,18 +367,18 @@ test('bastion matchup suggestions do not mistake negative relations for counters
         ->assertInertia(fn (Assert $page) => $page
             ->where('selectedHeroKey', 'bastion')
             ->has('heroes.0.guide.counters.tank', 3)
-            ->where('heroes.0.guide.counters.tank.0.key', 'sigma')
-            ->where('heroes.0.guide.counters.tank.1.key', 'dva')
+            ->where('heroes.0.guide.counters.tank.0.key', 'dva')
+            ->where('heroes.0.guide.counters.tank.1.key', 'sigma')
             ->where('heroes.0.guide.counters.tank.2.key', 'orisa')
             ->has('heroes.0.guide.counters.damage', 3)
             ->where('heroes.0.guide.counters.damage.0.key', 'genji')
             ->has('heroes.0.guide.counters.support', 3)
-            ->where('heroes.0.guide.counters.support.0.key', 'ana')
+            ->where('heroes.0.guide.counters.support.0.key', 'baptiste')
             ->missing('heroes.0.guide.counters.tank.0.score'),
         );
 });
 
-test('map-specific winrates break ties between equally rated matchup suggestions', function () {
+test('map statistics do not override curated matchup ordering', function () {
     Cache::flush();
     Http::fake(function (Request $request) {
         return match (parse_url($request->url(), PHP_URL_PATH)) {
@@ -297,10 +411,10 @@ test('map-specific winrates break ties between equally rated matchup suggestions
             ->where('selectedMapName', 'Circuit Royal')
             ->where('selectedHeroKey', 'pharah')
             ->where('tierList.0.key', 'cassidy')
-            ->where('heroes.0.guide.counters.damage.0.key', 'cassidy')
-            ->where('heroes.0.guide.counters.damage.0.winrateDifference', 7)
-            ->where('heroes.0.guide.counters.damage.1.key', 'widowmaker')
-            ->where('heroes.0.guide.counters.damage.2.key', 'soldier-76'),
+            ->where('heroes.0.guide.counters.damage.0.key', 'ashe')
+            ->where('heroes.0.guide.counters.damage.1.key', 'cassidy')
+            ->where('heroes.0.guide.counters.damage.2.key', 'soldier-76')
+            ->missing('heroes.0.guide.counters.damage.0.winrate'),
         );
 
     Http::assertSent(fn (Request $request): bool => str_contains(

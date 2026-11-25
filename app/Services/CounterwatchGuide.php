@@ -2,6 +2,7 @@
 
 namespace App\Services;
 
+use App\Models\CounterwatchHeroMapRecommendation;
 use App\Models\CounterwatchMatchup;
 use App\Models\HeroMatchup;
 
@@ -120,52 +121,13 @@ final class CounterwatchGuide
         ],
     ];
 
-    private const MAP_GUIDES = [
-        'sightline' => [
-            'favorable' => [
-                ['circuit-royal', 'Les longues avenues, surtout au premier segment, offrent des lignes de tir dégagées aux héros qui veulent garder leurs distances.'],
-                ['havana', 'Les approches ouvertes et les longues rues récompensent la portée; les zones urbaines raccourcissent toutefois certains duels.'],
-                ['junkertown', 'Les premiers segments exposent le convoi sur de longues lignes et donnent plusieurs positions en hauteur.'],
-            ],
-            'difficult' => [
-                ['kings-row', 'Les rues étroites et les angles cassés raccourcissent souvent les lignes de tir.'],
-                ['lijiang-tower', 'Control Center et Night Market sont resserrés; Garden est plus ouvert, donc l’avantage dépend du sous-plan.'],
-                ['samoa', 'Plusieurs zones de combat sont entourées de bâtiments et de couvertures qui coupent les longues lignes de vue.'],
-            ],
-        ],
-        'close' => [
-            'favorable' => [
-                ['kings-row', 'Les rues étroites et les nombreux coins permettent d’approcher sous couvert et de forcer des combats rapprochés.'],
-                ['lijiang-tower', 'Control Center et Night Market favorisent les engagements autour d’objectifs compacts; Garden est plus ouvert.'],
-                ['samoa', 'Downtown et Volcano offrent des zones resserrées où une équipe groupée peut tenir l’espace; Beach est plus ouvert.'],
-            ],
-            'difficult' => [
-                ['circuit-royal', 'Les longues traversées exposées donnent à l’adversaire le temps de faire des dégâts avant l’engagement.'],
-                ['havana', 'Les lignes de tir longues et les segments ouverts rendent l’approche au contact plus coûteuse.'],
-                ['junkertown', 'Les premiers segments offrent de longues lignes et des hauteurs qui peuvent retarder une entrée groupée.'],
-            ],
-        ],
-        'vertical' => [
-            'favorable' => [
-                ['watchpoint-gibraltar', 'Les hauteurs successives, les passerelles et les accès latéraux créent plusieurs routes d’engagement et de sortie.'],
-                ['dorado', 'Les toits et les ruelles latérales permettent de changer d’angle et d’atteindre les positions arrière.'],
-                ['numbani', 'Les différences de hauteur et les accès parallèles facilitent les attaques depuis plusieurs directions.'],
-            ],
-            'difficult' => [
-                ['circuit-royal', 'Certaines traversées sont très exposées et offrent peu d’approches sûres avant d’atteindre les positions en hauteur.'],
-                ['havana', 'Les longues lignes dégagées peuvent révéler une approche avant que les héros mobiles aient atteint leur cible.'],
-                ['esperanca', 'Les grandes places et les longues rues exposent les engagements si l’équipe ne coordonne pas ses couvertures.'],
-            ],
-        ],
-    ];
-
     /**
      * @param  array<string, mixed>  $hero
      * @param  list<array<string, mixed>>  $roster
      * @param  list<array<string, mixed>>  $maps
      * @param  list<array<string, mixed>>  $matchups
-     * @param  array<string, array{winrate: float, pickrate: float|null}>  $heroStats
      * @param  list<array<string, mixed>>  $archetypeMatchups
+     * @param  list<array<string, mixed>>  $heroMapRecommendations
      * @return array<string, mixed>
      */
     public function heroGuide(
@@ -173,8 +135,8 @@ final class CounterwatchGuide
         array $roster,
         array $maps = [],
         array $matchups = [],
-        array $heroStats = [],
         array $archetypeMatchups = [],
+        array $heroMapRecommendations = [],
     ): array {
         $key = is_string($hero['key'] ?? null) ? $hero['key'] : '';
         $role = is_string($hero['role'] ?? null) ? $hero['role'] : '';
@@ -246,7 +208,11 @@ final class CounterwatchGuide
             }
         }
 
-        $fallbackGroups = array_values(array_unique([$profile['group'], ...$profile['styles']]));
+        $fallbackGroups = array_values(array_unique([
+            $profile['group'],
+            ...$profile['styles'],
+            ...array_keys(self::GROUP_NOTES),
+        ]));
         $fallbackCandidates = [
             'tank' => [],
             'damage' => [],
@@ -294,10 +260,6 @@ final class CounterwatchGuide
                     'priority' => 0,
                     'reason' => $fallbackCandidates[$counterRole][$candidateKey]['reason']
                         ?? 'Relation héros-à-héros enregistrée dans la base OWGG.',
-                    'winrate' => $heroStats[$candidateKey]['winrate'] ?? null,
-                    'winrateDifference' => isset($heroStats[$candidateKey]['winrate'], $heroStats[$key]['winrate'])
-                        ? round($heroStats[$candidateKey]['winrate'] - $heroStats[$key]['winrate'], 1)
-                        : null,
                 ];
             }
 
@@ -313,10 +275,6 @@ final class CounterwatchGuide
                     'score' => 0,
                     'priority' => $fallback['priority'],
                     'reason' => $fallback['reason'],
-                    'winrate' => $heroStats[$candidateKey]['winrate'] ?? null,
-                    'winrateDifference' => isset($heroStats[$candidateKey]['winrate'], $heroStats[$key]['winrate'])
-                        ? round($heroStats[$candidateKey]['winrate'] - $heroStats[$key]['winrate'], 1)
-                        : null,
                 ];
             }
 
@@ -325,28 +283,14 @@ final class CounterwatchGuide
                     return $second['score'] <=> $first['score'];
                 }
 
-                if ($first['winrate'] === $second['winrate']) {
-                    return $first['priority'] <=> $second['priority']
-                        ?: strcmp($first['name'], $second['name']);
-                }
-
-                if ($first['winrate'] === null) {
-                    return 1;
-                }
-
-                if ($second['winrate'] === null) {
-                    return -1;
-                }
-
-                return $second['winrate'] <=> $first['winrate'];
+                return $first['priority'] <=> $second['priority']
+                    ?: strcmp($first['name'], $second['name']);
             });
             $counters[$counterRole] = array_map(
                 static fn (array $suggestion): array => [
                     'key' => $suggestion['key'],
                     'name' => $suggestion['name'],
                     'reason' => $suggestion['reason'],
-                    'winrate' => $suggestion['winrate'],
-                    'winrateDifference' => $suggestion['winrateDifference'],
                 ],
                 array_slice($suggestions, 0, 3),
             );
@@ -360,7 +304,7 @@ final class CounterwatchGuide
             'strengths' => $notes['strengths'],
             'weaknesses' => $notes['weaknesses'],
             'counters' => $counters,
-            'maps' => $this->mapGuide($profile, $maps),
+            'maps' => $this->mapGuide($key, $maps, $heroMapRecommendations),
             'confidence' => isset(self::HERO_PROFILES[$key]) ? 'curated' : 'inferred',
         ];
     }
@@ -426,6 +370,38 @@ final class CounterwatchGuide
     }
 
     /**
+     * @return list<array{hero_id: string, map_id: string, suitability: string, priority: int, source: string, source_url: string|null}>
+     */
+    public function heroMapRecommendations(): array
+    {
+        $recommendations = CounterwatchHeroMapRecommendation::query()
+            ->orderBy('hero_id')
+            ->orderBy('suitability')
+            ->orderBy('priority')
+            ->get([
+                'hero_id',
+                'map_id',
+                'suitability',
+                'priority',
+                'source',
+                'source_url',
+            ])
+            ->map(static fn (CounterwatchHeroMapRecommendation $recommendation): array => [
+                'hero_id' => (string) $recommendation->hero_id,
+                'map_id' => (string) $recommendation->map_id,
+                'suitability' => (string) $recommendation->suitability,
+                'priority' => (int) $recommendation->priority,
+                'source' => (string) $recommendation->source,
+                'source_url' => $recommendation->source_url !== null
+                    ? (string) $recommendation->source_url
+                    : null,
+            ])
+            ->all();
+
+        return array_values($recommendations);
+    }
+
+    /**
      * @return array<string, mixed>
      */
     public function compositionGuide(): array
@@ -451,18 +427,12 @@ final class CounterwatchGuide
     }
 
     /**
-     * @param  array{styles: list<string>, group: string}  $profile
      * @param  list<array<string, mixed>>  $maps
-     * @return array{favorable: list<array{key: string, name: string, reason: string}>, difficult: list<array{key: string, name: string, reason: string}>}
+     * @param  list<array<string, mixed>>  $heroMapRecommendations
+     * @return array{favorable: list<array{key: string, name: string, source: string, sourceUrl: string|null}>, difficult: list<array{key: string, name: string, source: string, sourceUrl: string|null}>}
      */
-    private function mapGuide(array $profile, array $maps): array
+    private function mapGuide(string $heroKey, array $maps, array $heroMapRecommendations): array
     {
-        $family = match ($profile['group']) {
-            'air', 'backline', 'poke', 'sniper' => 'sightline',
-            'brawl', 'deployable', 'frontline' => 'close',
-            'support' => in_array('brawl', $profile['styles'], true) ? 'close' : 'vertical',
-            default => 'vertical',
-        };
         $mapsByKey = [];
 
         foreach ($maps as $map) {
@@ -475,18 +445,27 @@ final class CounterwatchGuide
         }
 
         $recommendations = [];
-        foreach (['favorable', 'difficult'] as $rating) {
-            $recommendations[$rating] = [];
+        foreach (['favorable', 'difficult'] as $suitability) {
+            $recommendations[$suitability] = [];
 
-            foreach (self::MAP_GUIDES[$family][$rating] as [$mapKey, $reason]) {
-                if (! isset($mapsByKey[$mapKey])) {
+            foreach ($heroMapRecommendations as $recommendation) {
+                if (($recommendation['hero_id'] ?? null) !== $heroKey
+                    || ($recommendation['suitability'] ?? null) !== $suitability
+                    || ! is_string($recommendation['map_id'] ?? null)
+                    || ! isset($mapsByKey[$recommendation['map_id']])) {
                     continue;
                 }
 
-                $recommendations[$rating][] = [
+                $mapKey = $recommendation['map_id'];
+                $recommendations[$suitability][] = [
                     'key' => $mapKey,
                     'name' => $mapsByKey[$mapKey]['name'],
-                    'reason' => $reason,
+                    'source' => is_string($recommendation['source'] ?? null)
+                        ? $recommendation['source']
+                        : 'unknown',
+                    'sourceUrl' => is_string($recommendation['source_url'] ?? null)
+                        ? $recommendation['source_url']
+                        : null,
                 ];
             }
         }
