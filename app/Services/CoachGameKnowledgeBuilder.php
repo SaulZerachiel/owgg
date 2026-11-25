@@ -78,6 +78,7 @@ final class CoachGameKnowledgeBuilder
 
         $matchups = $matchedHeroes !== [] ? $this->counterwatch->matchups() : [];
         $archetypeMatchups = $matchedHeroes !== [] ? $this->counterwatch->archetypeMatchups() : [];
+        $heroMapRecommendations = $matchedHeroes !== [] ? $this->counterwatch->heroMapRecommendations() : [];
         $knowledge = [];
         $unavailableHeroes = [];
 
@@ -121,8 +122,8 @@ final class CoachGameKnowledgeBuilder
                     $catalog['heroes'],
                     $maps,
                     $matchups,
-                    [],
                     $archetypeMatchups,
+                    $heroMapRecommendations,
                 ),
             ];
         }
@@ -131,8 +132,9 @@ final class CoachGameKnowledgeBuilder
             .'Les Perks standard et les pouvoirs Stadium sont deux systèmes distincts. '
             .'Les fiches donnent les capacités et Perks actuels, pas toutes les interactions cachées : '
             .'distingue les faits de fiche de tes déductions tactiques, et signale les interactions dépendantes du patch. '
-            .'Les matchups Counterwatch combinent des relations héros-à-héros et des pistes liées au style de jeu : ce sont des indications éditoriales, pas des statistiques de duel ni des certitudes; '
-            .'les affinités de carte reposent sur la géométrie des lieux et restent subjectives. '
+            .'Les matchups Counterwatch combinent des relations héros-à-héros et des pistes liées au style de jeu, complétées si besoin par d’autres archétypes : ce sont des indications éditoriales, pas des statistiques de duel ni des certitudes; '
+            .'les fiches Counterwatch ont été consultées pour l’ensemble du roster; leurs winrates ne sont pas repris et les conseils OWGG restent des repères éditoriaux, pas des certitudes; '
+            .'les tendances de performance peuvent évoluer sans rework et leurs taux ne doivent pas être présentés comme des faits de matchup. '
             .'Conserve les noms Brawl, Dive et Poke : ne traduis pas Dive par « plongée » ou « plongeur », '
             .'et n’ajoute pas « Rush » après Brawl. '
             .'Si map_data_unavailable vaut true, signale que les informations de carte manquent au lieu de les inventer. '

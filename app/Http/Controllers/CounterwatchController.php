@@ -133,6 +133,7 @@ class CounterwatchController extends Controller
 
         $matchups = $roster !== [] ? $this->guide->matchups() : [];
         $archetypeMatchups = $roster !== [] ? $this->guide->archetypeMatchups() : [];
+        $heroMapRecommendations = $roster !== [] ? $this->guide->heroMapRecommendations() : [];
         $requestedHero = $request->query('hero');
         $selectedHeroKey = is_string($requestedHero) && isset($rosterByKey[$requestedHero])
                 ? $requestedHero
@@ -150,8 +151,8 @@ class CounterwatchController extends Controller
                         $roster,
                         $maps,
                         $matchups,
-                        $heroStatsByKey,
                         $archetypeMatchups,
+                        $heroMapRecommendations,
                     ),
                 ],
                 $roster,
@@ -180,7 +181,7 @@ class CounterwatchController extends Controller
             'selectedHeroKey' => $selectedHeroKey,
             'statsScope' => 'PC · compétitif · Europe · toutes divisions',
             'compositionGuide' => $this->guide->compositionGuide(),
-            'dataNotice' => 'Le roster, les statistiques et les cartes viennent d’OverFast. Les suggestions de matchup OWGG ne sont pas des taux de victoire en duel.',
+            'dataNotice' => 'Le roster et les statistiques de la tier list viennent d’OverFast. Les fiches Counterwatch ont été consultées pour les 54 héros : elles servent de référence aux counters et aux cartes, sans reprendre leurs winrates. Les suggestions complémentaires s’appuient sur le style du héros et, si nécessaire, sur d’autres archétypes; tout dépend aussi de la composition et du contexte.',
         ]);
     }
 }
